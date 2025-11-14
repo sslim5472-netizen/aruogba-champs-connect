@@ -14,7 +14,7 @@ const ADMIN_PASSWORD = "aruogba2025";
 const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, user } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,14 +34,40 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Use a fixed email for password-only login
-      const { error } = await signIn("admin@aruogba.fc", password);
-      if (error) {
+      const adminEmail = "admin@aruogba.fc";
+      
+      // Try to sign in first
+      let { error: signInError } = await signIn(adminEmail, password);
+      
+      // If user doesn't exist, sign them up first
+      if (signInError?.message?.includes("Invalid login credentials")) {
+        toast.info("Creating admin account...");
+        
+        // Sign up the admin user
+        const { error: signUpError } = await signUp(adminEmail, password);
+        
+        if (signUpError) {
+          toast.error("Failed to create admin account");
+          return;
+        }
+        
+        // Now try signing in again
+        const { error: retryError } = await signIn(adminEmail, password);
+        if (retryError) {
+          toast.error("Authentication failed. Please try again.");
+        } else {
+          toast.success("Admin account created and logged in!");
+          navigate("/admin");
+        }
+      } else if (signInError) {
         toast.error("Authentication failed. Please try again.");
       } else {
         toast.success("Successfully logged in!");
         navigate("/admin");
       }
+    } catch (err) {
+      toast.error("An unexpected error occurred");
+      console.error(err);
     } finally {
       setLoading(false);
     }
