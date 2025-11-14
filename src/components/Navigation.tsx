@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Trophy, Users, Calendar, BarChart3, Video, Vote, Radio } from "lucide-react";
+import { Trophy, Users, Calendar, BarChart3, Vote, Radio } from "lucide-react";
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -14,7 +14,6 @@ const Navigation = () => {
     { path: "/live", label: "Live", icon: Radio },
     { path: "/stats", label: "Stats", icon: BarChart3 },
     { path: "/voting", label: "Vote", icon: Vote },
-    { path: "/highlights", label: "Highlights", icon: Video },
   ];
 
   return (
