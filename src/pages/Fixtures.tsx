@@ -1,13 +1,32 @@
+import { useEffect, useState } from "react";
 import Navigation from "@/components/Navigation";
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, MapPin } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 const Fixtures = () => {
-  const matches = [
-    { home: "Airway FC", away: "Knights FC", date: "Dec 8, 2025", time: "4:30 PM" },
-    { home: "Stars FC", away: "Sparta FC", date: "Dec 8, 2025", time: "4:45 PM" },
-    { home: "Kings FC", away: "Enjoyment FC", date: "Dec 8, 2025", time: "5:00 PM" },
-    { home: "Airway FC", away: "Stars FC", date: "Dec 8, 2025", time: "5:15 PM" },
-  ];
+  const [matches, setMatches] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      const { data, error } = await supabase
+        .from("matches")
+        .select(`
+          *,
+          home_team:teams!matches_home_team_id_fkey(name),
+          away_team:teams!matches_away_team_id_fkey(name)
+        `)
+        .order("match_date", { ascending: true });
+
+      if (!error && data) {
+        setMatches(data);
+      }
+      setLoading(false);
+    };
+
+    fetchMatches();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -23,7 +42,12 @@ const Fixtures = () => {
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto space-y-4 animate-scale-in">
+        {loading ? (
+          <div className="text-center text-muted-foreground">Loading matches...</div>
+        ) : matches.length === 0 ? (
+          <div className="text-center text-muted-foreground">No matches scheduled yet</div>
+        ) : (
+          <div>
           {matches.map((match, index) => (
             <div key={index} className="glass-card p-6 rounded-xl hover:glow-effect transition-all">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -32,14 +56,18 @@ const Fixtures = () => {
                     <Calendar className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="font-heading text-lg">{match.date}</div>
-                    <div className="text-sm text-muted-foreground">{match.time}</div>
+                    <div className="font-heading text-lg">
+                      {format(new Date(match.match_date), "MMM d, yyyy")}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(match.match_date), "h:mm a")}
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4 flex-1 justify-center">
                   <div className="text-right flex-1">
-                    <div className="font-heading text-lg">{match.home}</div>
+                    <div className="font-heading text-lg">{match.home_team?.name}</div>
                   </div>
                   
                   <div className="px-4 py-2 bg-muted rounded-lg font-heading text-sm">
@@ -47,18 +75,19 @@ const Fixtures = () => {
                   </div>
                   
                   <div className="text-left flex-1">
-                    <div className="font-heading text-lg">{match.away}</div>
+                    <div className="font-heading text-lg">{match.away_team?.name}</div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4" />
-                  <span>Main Pitch</span>
+                  <span>{match.venue || "Main Pitch"}</span>
                 </div>
               </div>
             </div>
           ))}
         </div>
+        )}
       </div>
     </div>
   );
