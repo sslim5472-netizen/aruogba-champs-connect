@@ -8,10 +8,8 @@ import { Shield, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 
-// Simple password-only auth (for demo/internal use)
-const ADMIN_PASSWORD = "aruogba2025";
-
 const Auth = () => {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
@@ -25,42 +23,14 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (password !== ADMIN_PASSWORD) {
-      toast.error("Incorrect password");
-      return;
-    }
-    
     setLoading(true);
 
     try {
-      const adminEmail = "admin@aruogba.fc";
-      
       // Try to sign in first
-      let { error: signInError } = await signIn(adminEmail, password);
+      let { error: signInError } = await signIn(email, password);
       
-      // If user doesn't exist, sign them up first
-      if (signInError?.message?.includes("Invalid login credentials")) {
-        toast.info("Creating admin account...");
-        
-        // Sign up the admin user
-        const { error: signUpError } = await signUp(adminEmail, password);
-        
-        if (signUpError) {
-          toast.error("Failed to create admin account");
-          return;
-        }
-        
-        // Now try signing in again
-        const { error: retryError } = await signIn(adminEmail, password);
-        if (retryError) {
-          toast.error("Authentication failed. Please try again.");
-        } else {
-          toast.success("Admin account created and logged in!");
-          navigate("/admin");
-        }
-      } else if (signInError) {
-        toast.error("Authentication failed. Please try again.");
+      if (signInError) {
+        toast.error("Invalid credentials. Please check your email and password.");
       } else {
         toast.success("Successfully logged in!");
         navigate("/admin");
@@ -86,11 +56,25 @@ const Auth = () => {
               Admin Access
             </h1>
             <p className="text-muted-foreground">
-              Enter password to access the admin panel
+              Enter your credentials to access the admin panel
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="mt-1"
+                placeholder="admin@aruogba.fc"
+                autoComplete="email"
+              />
+            </div>
+
             <div>
               <Label htmlFor="password">Password</Label>
               <Input
@@ -100,8 +84,8 @@ const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="mt-1"
-                placeholder="Enter admin password"
-                autoFocus
+                placeholder="Enter your password"
+                autoComplete="current-password"
               />
             </div>
 
@@ -120,10 +104,6 @@ const Auth = () => {
               )}
             </Button>
           </form>
-
-          <div className="mt-6 text-center text-xs text-muted-foreground">
-            <p>Password: aruogba2025</p>
-          </div>
         </div>
       </div>
     </div>

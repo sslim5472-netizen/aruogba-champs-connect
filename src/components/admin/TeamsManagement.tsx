@@ -7,6 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
+
+const teamSchema = z.object({
+  name: z.string().trim().min(1, "Team name is required").max(100, "Team name must be less than 100 characters"),
+  captain: z.string().trim().min(1, "Captain name is required").max(100, "Captain name must be less than 100 characters"),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color (e.g., #FF0000)"),
+  logo_url: z.string().url("Must be a valid URL").max(500, "URL too long"),
+});
 
 interface Team {
   id: string;
@@ -96,10 +104,19 @@ export const TeamsManagement = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingTeam) {
-      updateMutation.mutate({ id: editingTeam.id, data: formData });
-    } else {
-      createMutation.mutate(formData);
+    
+    try {
+      teamSchema.parse(formData);
+      
+      if (editingTeam) {
+        updateMutation.mutate({ id: editingTeam.id, data: formData });
+      } else {
+        createMutation.mutate(formData);
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
     }
   };
 

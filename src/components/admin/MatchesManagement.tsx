@@ -9,6 +9,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { z } from "zod";
+
+const matchSchema = z.object({
+  home_team_id: z.string().uuid("Must select home team"),
+  away_team_id: z.string().uuid("Must select away team"),
+  match_date: z.string().min(1, "Match date is required"),
+  venue: z.string().trim().min(1, "Venue is required").max(200, "Venue name too long"),
+  status: z.enum(["scheduled", "live", "finished"]),
+  home_score: z.coerce.number().int().min(0, "Score cannot be negative"),
+  away_score: z.coerce.number().int().min(0, "Score cannot be negative"),
+}).refine((data) => data.home_team_id !== data.away_team_id, {
+  message: "Home and away teams must be different",
+  path: ["away_team_id"],
+});
 
 interface Match {
   id: string;
@@ -134,10 +148,19 @@ export const MatchesManagement = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingMatch) {
-      updateMutation.mutate({ id: editingMatch.id, data: formData });
-    } else {
-      createMutation.mutate(formData);
+    
+    try {
+      matchSchema.parse(formData);
+      
+      if (editingMatch) {
+        updateMutation.mutate({ id: editingMatch.id, data: formData });
+      } else {
+        createMutation.mutate(formData);
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
     }
   };
 
