@@ -17,8 +17,8 @@ const TeamProfile = () => {
       const { data, error } = await supabase
         .from('teams')
         .select('*')
-        .eq('name', teamName)
-        .single();
+        .ilike('name', teamName)
+        .maybeSingle();
       
       if (error) throw error;
       return data;
