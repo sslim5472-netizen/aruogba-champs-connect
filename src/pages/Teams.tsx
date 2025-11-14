@@ -27,7 +27,7 @@ const Teams = () => {
             Tournament Teams
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Six elite teams competing for glory in the Aruogba In-House Tournament 2025
+            Six elite teams competing for glory in the Aruogba Champion League 2025
           </p>
         </div>
 

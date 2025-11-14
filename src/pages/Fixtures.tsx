@@ -56,7 +56,7 @@ const Fixtures = () => {
             Match Schedule
           </h1>
           <p className="text-muted-foreground">
-            End of Year In-House Tournament
+            End of Year Champion League
           </p>
         </div>
 
