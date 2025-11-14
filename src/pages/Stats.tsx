@@ -1,18 +1,36 @@
+import { useEffect, useState } from "react";
 import Navigation from "@/components/Navigation";
-import { Trophy, Target, Shield, AlertCircle } from "lucide-react";
+import { Trophy, Target, Shield } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Stats = () => {
-  const topScorers = [
-    { name: "Presido", team: "Airway FC", goals: 0 },
-    { name: "Andre", team: "Stars FC", goals: 0 },
-    { name: "Ken", team: "Kings FC", goals: 0 },
-  ];
+  const [topScorers, setTopScorers] = useState<any[]>([]);
+  const [topAssists, setTopAssists] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const topAssists = [
-    { name: "Musoko", team: "Knights FC", assists: 0 },
-    { name: "Brazil", team: "Sparta FC", assists: 0 },
-    { name: "Odion", team: "Enjoyment FC", assists: 0 },
-  ];
+  useEffect(() => {
+    const fetchStats = async () => {
+      // Fetch top scorers
+      const { data: scorers } = await supabase
+        .from("players")
+        .select("name, goals, teams(name)")
+        .order("goals", { ascending: false })
+        .limit(5);
+
+      // Fetch top assists
+      const { data: assists } = await supabase
+        .from("players")
+        .select("name, assists, teams(name)")
+        .order("assists", { ascending: false })
+        .limit(5);
+
+      if (scorers) setTopScorers(scorers);
+      if (assists) setTopAssists(assists);
+      setLoading(false);
+    };
+
+    fetchStats();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -38,22 +56,26 @@ const Stats = () => {
               <h2 className="text-2xl font-heading">Top Scorers</h2>
             </div>
             
-            <div className="space-y-3">
-              {topScorers.map((player, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center font-heading text-gold">
-                      {index + 1}
+            {loading ? (
+              <div className="text-center text-muted-foreground">Loading...</div>
+            ) : (
+              <div className="space-y-3">
+                {topScorers.map((player, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center font-heading text-gold">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <div className="font-heading">{player.name}</div>
+                        <div className="text-sm text-muted-foreground">{player.teams?.name}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-heading">{player.name}</div>
-                      <div className="text-sm text-muted-foreground">{player.team}</div>
-                    </div>
+                    <div className="text-2xl font-heading text-primary">{player.goals}</div>
                   </div>
-                  <div className="text-2xl font-heading text-primary">{player.goals}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Top Assists */}
@@ -65,22 +87,26 @@ const Stats = () => {
               <h2 className="text-2xl font-heading">Top Assists</h2>
             </div>
             
-            <div className="space-y-3">
-              {topAssists.map((player, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-silver/20 flex items-center justify-center font-heading text-silver">
-                      {index + 1}
+            {loading ? (
+              <div className="text-center text-muted-foreground">Loading...</div>
+            ) : (
+              <div className="space-y-3">
+                {topAssists.map((player, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-silver/20 flex items-center justify-center font-heading text-silver">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <div className="font-heading">{player.name}</div>
+                        <div className="text-sm text-muted-foreground">{player.teams?.name}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-heading">{player.name}</div>
-                      <div className="text-sm text-muted-foreground">{player.team}</div>
-                    </div>
+                    <div className="text-2xl font-heading text-accent">{player.assists}</div>
                   </div>
-                  <div className="text-2xl font-heading text-accent">{player.assists}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Standings Table */}
