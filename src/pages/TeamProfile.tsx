@@ -88,7 +88,10 @@ const TeamProfile = () => {
     'kings-fc': kingsLogo,
     'enjoyment-fc': enjoymentLogo,
   };
-  const logoSrc = team?.logo_url || (team?.name ? logoMap[normalize(team.name)] : undefined) || '/placeholder.svg';
+  const normalized = team?.name ? normalize(team.name) : '';
+  const fallbackLogo = normalized ? logoMap[normalized] : undefined;
+  const isValidUrl = (s?: string | null) => Boolean(s && /^https?:\/\//.test(s));
+  const logoSrc = isValidUrl(team?.logo_url) ? (team!.logo_url as string) : (fallbackLogo || '/placeholder.svg');
 
   return (
     <div className="min-h-screen">
@@ -105,7 +108,7 @@ const TeamProfile = () => {
                 border: `3px solid ${team.color}`
               }}
             >
-              <img src={logoSrc} alt={team.name} className="w-full h-full object-contain" />
+              <img src={logoSrc} alt={team.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = fallbackLogo || '/placeholder.svg'; }} />
             </div>
             
             <div className="flex-1 text-center md:text-left">
