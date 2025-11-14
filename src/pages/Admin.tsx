@@ -43,15 +43,22 @@ const Admin = () => {
 
   const adminCards = [
     {
+      title: "Full CRUD Management",
+      description: "Complete control over teams, players, matches and highlights",
+      icon: Shield,
+      path: "/admin/manage",
+      roles: ['admin'],
+    },
+    {
       title: "Teams & Players",
-      description: "Manage team rosters and player statistics",
+      description: "View team rosters and player statistics",
       icon: Users,
       path: "/teams",
       roles: ['admin', 'captain'],
     },
     {
       title: "Matches",
-      description: "Create and update match fixtures and scores",
+      description: "View match fixtures and scores",
       icon: Calendar,
       path: "/fixtures",
       roles: ['admin'],
@@ -65,7 +72,7 @@ const Admin = () => {
     },
     {
       title: "Highlights",
-      description: "Upload and manage match highlights",
+      description: "View and manage match highlights",
       icon: Video,
       path: "/highlights",
       roles: ['admin'],
