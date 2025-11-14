@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Trophy, Target, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const Stats = () => {
+  const navigate = useNavigate();
   const [topScorers, setTopScorers] = useState<any[]>([]);
   const [topAssists, setTopAssists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const getTeamSlug = (teamName: string) => {
+    return teamName.toLowerCase().replace(/\s+/g, '-');
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -61,7 +67,11 @@ const Stats = () => {
             ) : (
               <div className="space-y-3">
                 {topScorers.map((player, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-4 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                    onClick={() => player.teams?.name && navigate(`/teams/${getTeamSlug(player.teams.name)}`)}
+                  >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center font-heading text-gold">
                         {index + 1}
@@ -92,7 +102,11 @@ const Stats = () => {
             ) : (
               <div className="space-y-3">
                 {topAssists.map((player, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-4 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                    onClick={() => player.teams?.name && navigate(`/teams/${getTeamSlug(player.teams.name)}`)}
+                  >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-silver/20 flex items-center justify-center font-heading text-silver">
                         {index + 1}
@@ -134,7 +148,11 @@ const Stats = () => {
                 </thead>
                 <tbody>
                   {["Airway FC", "Knights FC", "Stars FC", "Sparta FC", "Kings FC", "Enjoyment FC"].map((team, index) => (
-                    <tr key={team} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                    <tr 
+                      key={team} 
+                      className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/teams/${getTeamSlug(team)}`)}
+                    >
                       <td className="p-3 text-muted-foreground">{index + 1}</td>
                       <td className="p-3 font-heading">{team}</td>
                       <td className="p-3 text-center">0</td>
