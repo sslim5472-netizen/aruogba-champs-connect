@@ -10,14 +10,17 @@ const TeamProfile = () => {
   const { data: team, isLoading: teamLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
-      const teamName = teamSlug?.split('-').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1)
-      ).join(' ');
+      // Convert slug to proper team name format
+      // Handle special case for "FC" which should be uppercase
+      const teamName = teamSlug
+        ?.split('-')
+        .map(word => word.toUpperCase() === 'FC' ? 'FC' : word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
       
       const { data, error } = await supabase
         .from('teams')
         .select('*')
-        .ilike('name', teamName)
+        .ilike('name', teamName || '')
         .maybeSingle();
       
       if (error) throw error;
