@@ -4,16 +4,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, LogIn, UserPlus } from "lucide-react";
+import { Shield, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 
+// Simple password-only auth (for demo/internal use)
+const ADMIN_PASSWORD = "aruogba2025";
+
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,25 +25,22 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password !== ADMIN_PASSWORD) {
+      toast.error("Incorrect password");
+      return;
+    }
+    
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await signIn(email, password);
-        if (error) {
-          toast.error(error.message);
-        } else {
-          toast.success("Successfully logged in!");
-          navigate("/admin");
-        }
+      // Use a fixed email for password-only login
+      const { error } = await signIn("admin@aruogba.fc", password);
+      if (error) {
+        toast.error("Authentication failed. Please try again.");
       } else {
-        const { error } = await signUp(email, password);
-        if (error) {
-          toast.error(error.message);
-        } else {
-          toast.success("Account created! You can now log in.");
-          setIsLogin(true);
-        }
+        toast.success("Successfully logged in!");
+        navigate("/admin");
       }
     } finally {
       setLoading(false);
@@ -59,27 +57,14 @@ const Auth = () => {
               <Shield className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-heading gradient-text mb-2">
-              {isLogin ? "Welcome Back" : "Create Account"}
+              Admin Access
             </h1>
             <p className="text-muted-foreground">
-              {isLogin ? "Sign in to access the admin panel" : "Register for tournament access"}
+              Enter password to access the admin panel
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="mt-1"
-                placeholder="your@email.com"
-              />
-            </div>
-
             <div>
               <Label htmlFor="password">Password</Label>
               <Input
@@ -89,8 +74,8 @@ const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="mt-1"
-                placeholder="••••••••"
-                minLength={6}
+                placeholder="Enter admin password"
+                autoFocus
               />
             </div>
 
@@ -101,27 +86,17 @@ const Auth = () => {
             >
               {loading ? (
                 "Please wait..."
-              ) : isLogin ? (
-                <>
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
-                </>
               ) : (
                 <>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Sign Up
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Access Admin Panel
                 </>
               )}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-            </button>
+          <div className="mt-6 text-center text-xs text-muted-foreground">
+            <p>Password: aruogba2025</p>
           </div>
         </div>
       </div>
