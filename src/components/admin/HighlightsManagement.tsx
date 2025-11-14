@@ -40,8 +40,8 @@ export const HighlightsManagement = () => {
     description: "",
     video_url: "",
     thumbnail_url: "",
-    match_id: "",
-    team_id: "",
+    match_id: "none",
+    team_id: "none",
   });
 
   const { data: matches } = useQuery({
@@ -112,8 +112,8 @@ export const HighlightsManagement = () => {
     mutationFn: async (newHighlight: typeof formData) => {
       const { error } = await supabase.from("highlights").insert([{
         ...newHighlight,
-        match_id: newHighlight.match_id || null,
-        team_id: newHighlight.team_id || null,
+        match_id: newHighlight.match_id && newHighlight.match_id !== 'none' ? newHighlight.match_id : null,
+        team_id: newHighlight.team_id && newHighlight.team_id !== 'none' ? newHighlight.team_id : null,
       }]);
       if (error) throw error;
     },
@@ -129,8 +129,8 @@ export const HighlightsManagement = () => {
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
       const { error } = await supabase.from("highlights").update({
         ...data,
-        match_id: data.match_id || null,
-        team_id: data.team_id || null,
+        match_id: data.match_id && data.match_id !== 'none' ? data.match_id : null,
+        team_id: data.team_id && data.team_id !== 'none' ? data.team_id : null,
       }).eq("id", id);
       if (error) throw error;
     },
@@ -160,8 +160,8 @@ export const HighlightsManagement = () => {
       description: "",
       video_url: "",
       thumbnail_url: "",
-      match_id: "",
-      team_id: "",
+      match_id: "none",
+      team_id: "none",
     });
     setIsEditing(false);
     setEditingHighlight(null);
@@ -174,8 +174,8 @@ export const HighlightsManagement = () => {
       description: highlight.description || "",
       video_url: highlight.video_url,
       thumbnail_url: highlight.thumbnail_url || "",
-      match_id: highlight.match_id || "",
-      team_id: highlight.team_id || "",
+      match_id: highlight.match_id || "none",
+      team_id: highlight.team_id || "none",
     });
     setIsEditing(true);
   };
@@ -289,7 +289,7 @@ export const HighlightsManagement = () => {
                     <SelectValue placeholder="Select match" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {matches?.map((match: any) => (
                       <SelectItem key={match.id} value={match.id}>
                         {match.home_team.name} vs {match.away_team.name}
@@ -309,7 +309,7 @@ export const HighlightsManagement = () => {
                     <SelectValue placeholder="Select team" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {teams?.map((team) => (
                       <SelectItem key={team.id} value={team.id}>
                         {team.name}
