@@ -1,15 +1,20 @@
 import { Link, useLocation } from "react-router-dom";
-import { Trophy, Users, Calendar, BarChart3, Settings } from "lucide-react";
+import { Trophy, Users, Calendar, BarChart3, Video, Vote, Radio } from "lucide-react";
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
   const location = useLocation();
+  const { user } = useAuth();
   
   const navItems = [
     { path: "/", label: "Home", icon: Trophy },
     { path: "/teams", label: "Teams", icon: Users },
     { path: "/fixtures", label: "Fixtures", icon: Calendar },
+    { path: "/live", label: "Live", icon: Radio },
     { path: "/stats", label: "Stats", icon: BarChart3 },
+    { path: "/voting", label: "Vote", icon: Vote },
+    { path: "/highlights", label: "Highlights", icon: Video },
   ];
 
   return (
@@ -42,14 +47,21 @@ const Navigation = () => {
                 <Icon className="w-4 h-4" />
                 <span className="hidden md:inline text-sm font-heading">{label}</span>
               </Link>
-            ))}
+              ))}
             
-            <Link
-              to="/admin"
-              className="ml-2 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-            >
-              <Settings className="w-4 h-4" />
-            </Link>
+            {user && (
+              <Link
+                to="/admin"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  location.pathname.startsWith('/admin')
+                    ? "bg-gradient-to-r from-primary to-accent text-white"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <Trophy className="w-4 h-4" />
+                <span className="hidden md:inline text-sm font-heading">Admin</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
