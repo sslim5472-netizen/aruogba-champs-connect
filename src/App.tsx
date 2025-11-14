@@ -12,6 +12,8 @@ import LiveMatch from "./pages/LiveMatch";
 import Stats from "./pages/Stats";
 import TopScorers from "./pages/TopScorers";
 import TopAssists from "./pages/TopAssists";
+import TopYellowCards from "./pages/TopYellowCards";
+import TopRedCards from "./pages/TopRedCards";
 import Voting from "./pages/Voting";
 import Highlights from "./pages/Highlights";
 import Admin from "./pages/Admin";
@@ -37,6 +39,8 @@ const App = () => (
             <Route path="/stats" element={<Stats />} />
             <Route path="/stats/top-scorers" element={<TopScorers />} />
             <Route path="/stats/top-assists" element={<TopAssists />} />
+            <Route path="/stats/top-yellow-cards" element={<TopYellowCards />} />
+            <Route path="/stats/top-red-cards" element={<TopRedCards />} />
             <Route path="/voting" element={<Voting />} />
             <Route path="/highlights" element={<Highlights />} />
             <Route path="/admin" element={<Admin />} />
