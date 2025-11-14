@@ -54,12 +54,18 @@ const Stats = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-scale-in">
           {/* Top Scorers */}
-          <div className="glass-card p-6 rounded-xl">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-gradient-to-br from-primary to-accent p-3 rounded-lg">
-                <Target className="w-6 h-6 text-white" />
+          <div 
+            className="glass-card p-6 rounded-xl cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => navigate("/stats/top-scorers")}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-primary to-accent p-3 rounded-lg">
+                  <Target className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-heading">Top Scorers</h2>
               </div>
-              <h2 className="text-2xl font-heading">Top Scorers</h2>
+              <span className="text-sm text-muted-foreground">Click to view all →</span>
             </div>
             
             {loading ? (
@@ -89,12 +95,18 @@ const Stats = () => {
           </div>
 
           {/* Top Assists */}
-          <div className="glass-card p-6 rounded-xl">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-gradient-to-br from-accent to-primary p-3 rounded-lg">
-                <Trophy className="w-6 h-6 text-white" />
+          <div 
+            className="glass-card p-6 rounded-xl cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => navigate("/stats/top-assists")}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-accent to-primary p-3 rounded-lg">
+                  <Trophy className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-heading">Top Assists</h2>
               </div>
-              <h2 className="text-2xl font-heading">Top Assists</h2>
+              <span className="text-sm text-muted-foreground">Click to view all →</span>
             </div>
             
             {loading ? (

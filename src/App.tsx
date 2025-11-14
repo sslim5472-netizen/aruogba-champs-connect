@@ -10,6 +10,8 @@ import TeamProfile from "./pages/TeamProfile";
 import Fixtures from "./pages/Fixtures";
 import LiveMatch from "./pages/LiveMatch";
 import Stats from "./pages/Stats";
+import TopScorers from "./pages/TopScorers";
+import TopAssists from "./pages/TopAssists";
 import Voting from "./pages/Voting";
 import Highlights from "./pages/Highlights";
 import Admin from "./pages/Admin";
@@ -33,6 +35,8 @@ const App = () => (
             <Route path="/fixtures" element={<Fixtures />} />
             <Route path="/live" element={<LiveMatch />} />
             <Route path="/stats" element={<Stats />} />
+            <Route path="/stats/top-scorers" element={<TopScorers />} />
+            <Route path="/stats/top-assists" element={<TopAssists />} />
             <Route path="/voting" element={<Voting />} />
             <Route path="/highlights" element={<Highlights />} />
             <Route path="/admin" element={<Admin />} />
