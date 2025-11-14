@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Countdown from "@/components/Countdown";
 import TeamCard from "@/components/TeamCard";
-import { Trophy, Calendar, BarChart3 } from "lucide-react";
+import { Trophy, Calendar, BarChart3, Video, Vote, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import airwayLogo from "@/assets/airway-fc.jpg";
 import knightsLogo from "@/assets/knights-fc.jpg";
@@ -45,8 +45,26 @@ const Index = () => {
           <Countdown />
 
           <div className="flex flex-wrap items-center justify-center gap-4 mt-12">
-            <Link to="/fixtures">
+            <Link to="/live">
+              <Button className="bg-gradient-to-r from-red-600 to-red-800 hover:opacity-90 text-lg px-8 py-6">
+                <Radio className="w-5 h-5 mr-2" />
+                Live Match
+              </Button>
+            </Link>
+            <Link to="/voting">
               <Button className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-lg px-8 py-6">
+                <Vote className="w-5 h-5 mr-2" />
+                Vote MOTM
+              </Button>
+            </Link>
+            <Link to="/highlights">
+              <Button variant="outline" className="text-lg px-8 py-6 border-primary/50 hover:bg-primary/10">
+                <Video className="w-5 h-5 mr-2" />
+                Highlights
+              </Button>
+            </Link>
+            <Link to="/fixtures">
+              <Button variant="outline" className="text-lg px-8 py-6 border-primary/50 hover:bg-primary/10">
                 <Calendar className="w-5 h-5 mr-2" />
                 View Fixtures
               </Button>
