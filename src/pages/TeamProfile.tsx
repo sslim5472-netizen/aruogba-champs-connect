@@ -3,6 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Target, Shield, AlertCircle } from "lucide-react";
+import airwayLogo from "@/assets/airway-fc.jpg";
+import knightsLogo from "@/assets/knights-fc.jpg";
+import starsLogo from "@/assets/stars-fc.jpg";
+import spartaLogo from "@/assets/sparta-fc.jpg";
+import kingsLogo from "@/assets/kings-fc.jpg";
+import enjoymentLogo from "@/assets/enjoyment-fc.jpg";
 
 const TeamProfile = () => {
   const { teamSlug } = useParams();
@@ -73,6 +79,17 @@ const TeamProfile = () => {
     motmAwards: players?.reduce((sum, p) => sum + (p.motm_awards || 0), 0) || 0,
   };
 
+  const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '-');
+  const logoMap: Record<string, string> = {
+    'airway-fc': airwayLogo,
+    'knights-fc': knightsLogo,
+    'stars-fc': starsLogo,
+    'sparta-fc': spartaLogo,
+    'kings-fc': kingsLogo,
+    'enjoyment-fc': enjoymentLogo,
+  };
+  const logoSrc = team?.logo_url || (team?.name ? logoMap[normalize(team.name)] : undefined) || '/placeholder.svg';
+
   return (
     <div className="min-h-screen">
       <Navigation />
@@ -88,7 +105,7 @@ const TeamProfile = () => {
                 border: `3px solid ${team.color}`
               }}
             >
-              <img src={team.logo_url} alt={team.name} className="w-full h-full object-contain" />
+              <img src={logoSrc} alt={team.name} className="w-full h-full object-contain" />
             </div>
             
             <div className="flex-1 text-center md:text-left">
