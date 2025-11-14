@@ -7,6 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Shield, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
+import { z } from "zod";
+
+const authSchema = z.object({
+  email: z.string().email('Invalid email address').max(255, 'Email too long'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(100, 'Password too long')
+});
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -26,7 +32,15 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Try to sign in first
+      // Validate input
+      const result = authSchema.safeParse({ email, password });
+      if (!result.success) {
+        toast.error(result.error.errors[0].message);
+        setLoading(false);
+        return;
+      }
+
+      // Try to sign in
       let { error: signInError } = await signIn(email, password);
       
       if (signInError) {

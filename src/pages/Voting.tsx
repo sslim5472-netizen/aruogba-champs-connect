@@ -1,15 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Check } from "lucide-react";
+import { Trophy, Check, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { z } from "zod";
+
+const voteSchema = z.object({
+  playerId: z.string().uuid('Invalid player selection'),
+  matchId: z.string().uuid('Invalid match selection')
+});
 
 const Voting = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const { data: recentMatch } = useQuery({
     queryKey: ['recent-finished-match'],
@@ -74,16 +98,37 @@ const Voting = () => {
   const voteMutation = useMutation({
     mutationFn: async (playerId: string) => {
       if (!recentMatch) throw new Error('No match selected');
+      if (!user) throw new Error('Must be logged in to vote');
+
+      // Validate input
+      const result = voteSchema.safeParse({ 
+        playerId, 
+        matchId: recentMatch.id 
+      });
       
-      // Use a fingerprint as voter identifier (in production, use better method)
-      const voterIp = `voter_${Date.now()}_${Math.random()}`;
+      if (!result.success) {
+        throw new Error(result.error.errors[0].message);
+      }
+
+      // Check if user already voted for this match
+      const { data: existingVote } = await supabase
+        .from('votes')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('match_id', recentMatch.id)
+        .single();
+
+      if (existingVote) {
+        throw new Error('You have already voted for this match');
+      }
       
       const { error } = await supabase
         .from('votes')
         .insert({
           match_id: recentMatch.id,
           player_id: playerId,
-          voter_ip: voterIp,
+          user_id: user.id,
+          voter_ip: 'authenticated', // Keep for legacy compatibility
         });
       
       if (error) throw error;
@@ -103,6 +148,30 @@ const Voting = () => {
       voteMutation.mutate(selectedPlayer);
     }
   };
+
+  // Show login prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="container mx-auto px-4 py-12">
+          <div className="glass-card p-12 rounded-xl text-center">
+            <LogIn className="w-16 h-16 mx-auto mb-4 text-primary" />
+            <h2 className="text-2xl font-heading mb-4">Login Required</h2>
+            <p className="text-muted-foreground mb-6">
+              You must be logged in to vote for Player of the Match
+            </p>
+            <Button
+              onClick={() => navigate('/auth')}
+              className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
+            >
+              Go to Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!recentMatch) {
     return (
@@ -198,7 +267,7 @@ const Voting = () => {
             <div className="text-center">
               <Button
                 onClick={handleVote}
-                disabled={!selectedPlayer || voteMutation.isPending}
+                disabled={!selectedPlayer || voteMutation.isPending || !user}
                 className="bg-gradient-to-r from-primary to-accent hover:opacity-90 px-12 py-6 text-lg"
               >
                 {voteMutation.isPending ? 'Submitting...' : 'Submit Vote'}
