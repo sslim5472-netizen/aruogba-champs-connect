@@ -34,7 +34,7 @@ const Index = () => {
               ARUOGBA FC
             </h1>
             <p className="text-xl md:text-2xl text-silver mb-4">
-              End of Year In-House Tournament 2025
+              End of Year Champion League 2025
             </p>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Six teams. One champion. Experience the thrill of competitive 7-a-side football
