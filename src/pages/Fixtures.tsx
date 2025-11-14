@@ -14,8 +14,8 @@ const Fixtures = () => {
         .from("matches")
         .select(`
           *,
-          home_team:teams!matches_home_team_id_fkey(name),
-          away_team:teams!matches_away_team_id_fkey(name)
+          home_team:teams!matches_home_team_id_fkey(name, logo_url),
+          away_team:teams!matches_away_team_id_fkey(name, logo_url)
         `)
         .order("match_date", { ascending: true });
 
@@ -66,15 +66,29 @@ const Fixtures = () => {
                 </div>
 
                 <div className="flex items-center gap-4 flex-1 justify-center">
-                  <div className="text-right flex-1">
+                  <div className="text-right flex-1 flex items-center justify-end gap-3">
                     <div className="font-heading text-lg">{match.home_team?.name}</div>
+                    {match.home_team?.logo_url && (
+                      <img 
+                        src={match.home_team.logo_url} 
+                        alt={match.home_team.name}
+                        className="w-10 h-10 rounded-full object-contain border-2 border-border"
+                      />
+                    )}
                   </div>
                   
                   <div className="px-4 py-2 bg-muted rounded-lg font-heading text-sm">
                     VS
                   </div>
                   
-                  <div className="text-left flex-1">
+                  <div className="text-left flex-1 flex items-center gap-3">
+                    {match.away_team?.logo_url && (
+                      <img 
+                        src={match.away_team.logo_url} 
+                        alt={match.away_team.name}
+                        className="w-10 h-10 rounded-full object-contain border-2 border-border"
+                      />
+                    )}
                     <div className="font-heading text-lg">{match.away_team?.name}</div>
                   </div>
                 </div>
