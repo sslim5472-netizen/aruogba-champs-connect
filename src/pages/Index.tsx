@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Countdown from "@/components/Countdown";
 import TeamCard from "@/components/TeamCard";
-import { Trophy, Calendar, BarChart3, Vote, Radio } from "lucide-react";
+import { Trophy, Calendar, BarChart3, Vote, Radio, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import airwayLogo from "@/assets/airway-fc.jpg";
 import knightsLogo from "@/assets/knights-fc.jpg";
@@ -97,6 +97,20 @@ const Index = () => {
               Explore All Teams
             </Button>
           </Link>
+        </div>
+      </div>
+
+      {/* Admin Panel Section */}
+      <div className="border-t border-border/50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <Link to="/auth">
+              <Button variant="outline" className="border-muted-foreground/30 hover:bg-muted/50">
+                <Shield className="w-4 h-4 mr-2" />
+                Admin Panel
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
