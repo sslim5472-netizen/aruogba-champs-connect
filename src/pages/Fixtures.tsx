@@ -3,10 +3,28 @@ import Navigation from "@/components/Navigation";
 import { Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import airwayLogo from "@/assets/airway-fc.jpg";
+import knightsLogo from "@/assets/knights-fc.jpg";
+import starsLogo from "@/assets/stars-fc.jpg";
+import spartaLogo from "@/assets/sparta-fc.jpg";
+import kingsLogo from "@/assets/kings-fc.jpg";
+import enjoymentLogo from "@/assets/enjoyment-fc.jpg";
 
 const Fixtures = () => {
   const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const getTeamLogo = (teamName: string) => {
+    const logoMap: { [key: string]: string } = {
+      "Airway FC": airwayLogo,
+      "Knights FC": knightsLogo,
+      "Stars FC": starsLogo,
+      "Sparta FC": spartaLogo,
+      "Kings FC": kingsLogo,
+      "Enjoyment FC": enjoymentLogo,
+    };
+    return logoMap[teamName] || "";
+  };
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -68,9 +86,9 @@ const Fixtures = () => {
                 <div className="flex items-center gap-4 flex-1 justify-center">
                   <div className="text-right flex-1 flex items-center justify-end gap-3">
                     <div className="font-heading text-lg">{match.home_team?.name}</div>
-                    {match.home_team?.logo_url && (
+                    {match.home_team?.name && (
                       <img 
-                        src={match.home_team.logo_url} 
+                        src={getTeamLogo(match.home_team.name)} 
                         alt={match.home_team.name}
                         className="w-10 h-10 rounded-full object-contain border-2 border-border"
                       />
@@ -82,9 +100,9 @@ const Fixtures = () => {
                   </div>
                   
                   <div className="text-left flex-1 flex items-center gap-3">
-                    {match.away_team?.logo_url && (
+                    {match.away_team?.name && (
                       <img 
-                        src={match.away_team.logo_url} 
+                        src={getTeamLogo(match.away_team.name)} 
                         alt={match.away_team.name}
                         className="w-10 h-10 rounded-full object-contain border-2 border-border"
                       />
