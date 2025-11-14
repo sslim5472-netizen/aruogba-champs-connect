@@ -52,8 +52,9 @@ const Voting = () => {
     queryFn: async () => {
       if (!recentMatch) return [];
       
+      // Use public_votes view to protect voter privacy
       const { data, error } = await supabase
-        .from('votes')
+        .from('public_votes')
         .select('player_id')
         .eq('match_id', recentMatch.id);
       

@@ -8,6 +8,21 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
+
+const playerSchema = z.object({
+  name: z.string().trim().min(1, "Player name is required").max(100, "Name too long"),
+  team_id: z.string().uuid("Must select a team"),
+  position: z.enum(["Defender", "Forward", "Goalkeeper", "Midfielder"]),
+  jersey_number: z.coerce.number().int().min(1).max(99, "Jersey number must be between 1-99"),
+  is_captain: z.boolean(),
+  goals: z.coerce.number().int().min(0, "Goals cannot be negative"),
+  assists: z.coerce.number().int().min(0, "Assists cannot be negative"),
+  yellow_cards: z.coerce.number().int().min(0, "Yellow cards cannot be negative"),
+  red_cards: z.coerce.number().int().min(0, "Red cards cannot be negative"),
+  clean_sheets: z.coerce.number().int().min(0, "Clean sheets cannot be negative"),
+  motm_awards: z.coerce.number().int().min(0, "MOTM awards cannot be negative"),
+});
 
 interface Player {
   id: string;
@@ -152,10 +167,19 @@ export const PlayersManagement = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingPlayer) {
-      updateMutation.mutate({ id: editingPlayer.id, data: formData });
-    } else {
-      createMutation.mutate(formData);
+    
+    try {
+      playerSchema.parse(formData);
+      
+      if (editingPlayer) {
+        updateMutation.mutate({ id: editingPlayer.id, data: formData });
+      } else {
+        createMutation.mutate(formData);
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
     }
   };
 

@@ -9,6 +9,16 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, X, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
+
+const highlightSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(200, "Title too long"),
+  description: z.string().trim().max(1000, "Description too long"),
+  video_url: z.string().url("Must be a valid video URL"),
+  thumbnail_url: z.string().url("Must be a valid thumbnail URL"),
+  match_id: z.string().optional(),
+  team_id: z.string().optional(),
+});
 
 interface Highlight {
   id: string;
@@ -172,10 +182,19 @@ export const HighlightsManagement = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingHighlight) {
-      updateMutation.mutate({ id: editingHighlight.id, data: formData });
-    } else {
-      createMutation.mutate(formData);
+    
+    try {
+      highlightSchema.parse(formData);
+      
+      if (editingHighlight) {
+        updateMutation.mutate({ id: editingHighlight.id, data: formData });
+      } else {
+        createMutation.mutate(formData);
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
     }
   };
 
