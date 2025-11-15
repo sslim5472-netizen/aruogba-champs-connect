@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 const Navigation = () => {
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, userRole, signOut } = useAuth();
   
   const navItems = [
     { path: "/", label: "Home", icon: Trophy },
@@ -49,7 +49,7 @@ const Navigation = () => {
               </Link>
               ))}
             
-            {user ? (
+            {user && userRole === 'admin' ? (
               <>
                 <Link
                   to="/admin"
@@ -72,6 +72,16 @@ const Navigation = () => {
                   <span className="hidden md:inline text-sm font-heading ml-2">Logout</span>
                 </Button>
               </>
+            ) : user ? (
+              <Button
+                onClick={() => signOut()}
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden md:inline text-sm font-heading ml-2">Logout</span>
+              </Button>
             ) : (
               <Link to="/auth">
                 <Button

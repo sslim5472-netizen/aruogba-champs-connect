@@ -9,6 +9,7 @@ import { MatchesManagement } from "@/components/admin/MatchesManagement";
 import { HighlightsManagement } from "@/components/admin/HighlightsManagement";
 import { Shield, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const AdminManagement = () => {
   const { user, userRole, signOut, loading } = useAuth();
@@ -20,8 +21,13 @@ const AdminManagement = () => {
   }, []);
 
   useEffect(() => {
-    if (mounted && !loading && (!user || userRole !== 'admin')) {
-      navigate("/auth");
+    if (mounted && !loading) {
+      if (!user) {
+        navigate("/admin/login");
+      } else if (userRole !== 'admin') {
+        toast.error("Access denied. Admin privileges required.");
+        navigate("/");
+      }
     }
   }, [user, userRole, loading, navigate, mounted]);
 

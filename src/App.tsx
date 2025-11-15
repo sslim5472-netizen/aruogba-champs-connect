@@ -17,6 +17,7 @@ import TopRedCards from "./pages/TopRedCards";
 import Voting from "./pages/Voting";
 import Highlights from "./pages/Highlights";
 import Admin from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin";
 import AdminManagement from "./pages/AdminManagement";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/voting" element={<Voting />} />
             <Route path="/highlights" element={<Highlights />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/manage" element={<AdminManagement />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
