@@ -100,6 +100,12 @@ const Voting = () => {
       if (!recentMatch) throw new Error('No match selected');
       if (!user) throw new Error('Must be logged in to vote');
 
+      // Check email verification
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser?.email_confirmed_at) {
+        throw new Error('Please verify your email address before voting. Check your inbox for the verification link.');
+      }
+
       // Validate input
       const result = voteSchema.safeParse({ 
         playerId, 
@@ -122,21 +128,40 @@ const Voting = () => {
         throw new Error('You have already voted for this match');
       }
       
+      // Submit vote
       const { error } = await supabase
         .from('votes')
         .insert({
           match_id: recentMatch.id,
           player_id: playerId,
           user_id: user.id,
-          voter_ip: 'authenticated', // Keep for legacy compatibility
+          voter_ip: 'authenticated',
         });
       
       if (error) throw error;
+
+      // Get player details for confirmation email
+      const selectedPlayerData = players?.find(p => p.id === playerId);
+      
+      // Send confirmation email
+      const { error: emailError } = await supabase.functions.invoke('send-vote-confirmation', {
+        body: {
+          playerName: selectedPlayerData?.name || 'Unknown Player',
+          matchDetails: `${recentMatch.home_team.name} ${recentMatch.home_score} - ${recentMatch.away_score} ${recentMatch.away_team.name}`,
+        }
+      });
+
+      if (emailError) {
+        console.error('Failed to send confirmation email:', emailError);
+        // Don't throw - vote was successful even if email failed
+      }
+
+      return { playerId };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vote-results'] });
       setHasVoted(true);
-      toast.success('Vote submitted successfully!');
+      toast.success('Vote submitted successfully! Check your email for confirmation.');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to submit vote');
