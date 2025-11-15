@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, LogIn } from "lucide-react";
+import { UserPlus, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 import { z } from "zod";
@@ -18,12 +18,13 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
-      navigate("/admin");
+      navigate("/");
     }
   }, [user, navigate]);
 
@@ -40,18 +41,37 @@ const Auth = () => {
         return;
       }
 
-      // Try to sign in
-      let { error: signInError } = await signIn(email, password);
-      
-      if (signInError) {
-        toast.error("Invalid credentials. Please check your email and password.");
+      if (isSignUp) {
+        // Sign up flow
+        const { error: signUpError } = await signUp(email, password);
+        
+        if (signUpError) {
+          if (signUpError.message.includes('already registered')) {
+            toast.error("This email is already registered. Please login instead.");
+          } else {
+            toast.error(signUpError.message || "Failed to create account");
+          }
+        } else {
+          toast.success("Account created successfully! You can now vote.");
+          navigate("/");
+        }
       } else {
-        toast.success("Successfully logged in!");
-        navigate("/admin");
+        // Sign in flow
+        const { error: signInError } = await signIn(email, password);
+        
+        if (signInError) {
+          if (signInError.message.includes('Invalid login credentials')) {
+            toast.error("Invalid email or password. Please try again.");
+          } else {
+            toast.error(signInError.message || "Failed to sign in");
+          }
+        } else {
+          toast.success("Successfully logged in!");
+          navigate("/");
+        }
       }
-    } catch (err) {
-      toast.error("An unexpected error occurred");
-      console.error(err);
+    } catch (err: any) {
+      toast.error(err?.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -62,15 +82,14 @@ const Auth = () => {
       <div className="max-w-md w-full">
         <div className="glass-card p-8 rounded-xl animate-fade-in">
           <div className="text-center mb-8">
-            <img src={aruogbaLogo} alt="Aruogba FC" className="w-20 h-20 mx-auto mb-4 object-contain" />
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-effect">
-              <Shield className="w-8 h-8 text-white" />
-            </div>
+            <img src={aruogbaLogo} alt="Aruogba League" className="w-20 h-20 mx-auto mb-4 object-contain" />
             <h1 className="text-3xl font-heading gradient-text mb-2">
-              Admin Access
+              {isSignUp ? "Create Account" : "Welcome Back"}
             </h1>
             <p className="text-muted-foreground">
-              Enter your credentials to access the admin panel
+              {isSignUp 
+                ? "Sign up to vote for Player of the Match" 
+                : "Sign in to continue voting"}
             </p>
           </div>
 
@@ -84,7 +103,7 @@ const Auth = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="mt-1"
-                placeholder="admin@aruogba.fc"
+                placeholder="your.email@example.com"
                 autoComplete="email"
               />
             </div>
@@ -98,9 +117,14 @@ const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="mt-1"
-                placeholder="Enter your password"
-                autoComplete="current-password"
+                placeholder="Min. 8 characters"
+                autoComplete={isSignUp ? "new-password" : "current-password"}
               />
+              {isSignUp && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Password must be at least 8 characters long
+                </p>
+              )}
             </div>
 
             <Button
@@ -112,12 +136,33 @@ const Auth = () => {
                 "Please wait..."
               ) : (
                 <>
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Access Admin Panel
+                  {isSignUp ? (
+                    <>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Create Account
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign In
+                    </>
+                  )}
                 </>
               )}
             </Button>
           </form>
+
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              type="button"
+            >
+              {isSignUp 
+                ? "Already have an account? Sign in" 
+                : "Don't have an account? Sign up"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
