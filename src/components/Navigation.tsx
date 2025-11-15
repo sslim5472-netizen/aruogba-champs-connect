@@ -1,11 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Trophy, Users, Calendar, BarChart3, Vote, Radio } from "lucide-react";
+import { Trophy, Users, Calendar, BarChart3, Vote, Radio, LogIn, LogOut } from "lucide-react";
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 const Navigation = () => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   
   const navItems = [
     { path: "/", label: "Home", icon: Trophy },
@@ -48,17 +49,39 @@ const Navigation = () => {
               </Link>
               ))}
             
-            {user && (
-              <Link
-                to="/admin"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                  location.pathname.startsWith('/admin')
-                    ? "bg-gradient-to-r from-primary to-accent text-white"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                <Trophy className="w-4 h-4" />
-                <span className="hidden md:inline text-sm font-heading">Admin</span>
+            {user ? (
+              <>
+                <Link
+                  to="/admin"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                    location.pathname.startsWith('/admin')
+                      ? "bg-gradient-to-r from-primary to-accent text-white"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span className="hidden md:inline text-sm font-heading">Admin</span>
+                </Link>
+                <Button
+                  onClick={() => signOut()}
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden md:inline text-sm font-heading ml-2">Logout</span>
+                </Button>
+              </>
+            ) : (
+              <Link to="/auth">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span className="hidden md:inline text-sm font-heading ml-2">Sign Up / Login</span>
+                </Button>
               </Link>
             )}
           </div>

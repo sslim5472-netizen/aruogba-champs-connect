@@ -174,23 +174,23 @@ const Voting = () => {
     }
   };
 
-  // Show login prompt if not authenticated
+  // Show signup/login prompt if not authenticated
   if (!user) {
     return (
       <div className="min-h-screen">
         <Navigation />
         <div className="container mx-auto px-4 py-12">
-          <div className="glass-card p-12 rounded-xl text-center">
+          <div className="glass-card p-12 rounded-xl text-center max-w-md mx-auto">
             <LogIn className="w-16 h-16 mx-auto mb-4 text-primary" />
-            <h2 className="text-2xl font-heading mb-4">Login Required</h2>
+            <h2 className="text-2xl font-heading mb-4">Join the Voting!</h2>
             <p className="text-muted-foreground mb-6">
-              You must be logged in to vote for Player of the Match
+              Create a free account or login to vote for your Player of the Match. It only takes a minute!
             </p>
             <Button
               onClick={() => navigate('/auth')}
-              className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
+              className="bg-gradient-to-r from-primary to-accent hover:opacity-90 w-full"
             >
-              Go to Login
+              Sign Up / Login to Vote
             </Button>
           </div>
         </div>
