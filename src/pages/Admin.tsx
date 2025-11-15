@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import { Shield, Users, Calendar, Trophy, LogOut, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
 
 const Admin = () => {
   const { user, userRole, signOut, loading } = useAuth();
@@ -16,10 +17,15 @@ const Admin = () => {
   }, []);
 
   useEffect(() => {
-    if (mounted && !loading && !user) {
-      navigate("/auth");
+    if (mounted && !loading) {
+      if (!user) {
+        navigate("/admin/login");
+      } else if (userRole !== 'admin') {
+        toast.error("Access denied. Admin privileges required.");
+        navigate("/");
+      }
     }
-  }, [user, loading, navigate, mounted]);
+  }, [user, userRole, loading, navigate, mounted]);
 
   if (loading || !mounted) {
     return (
