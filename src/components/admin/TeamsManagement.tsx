@@ -21,7 +21,7 @@ const teamSchema = z.object({
   name: z.string().trim().min(1, "Team name is required").max(100, "Team name must be less than 100 characters"),
   captain_name: z.string().trim().min(1, "Captain name is required").max(100, "Captain name must be less than 100 characters"),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color (e.g., #FF0000)"),
-  logo_url: z.string().url("Must be a valid URL").max(500, "URL too long"),
+  logo_url: z.string().trim().min(1, "Logo URL is required").max(500, "URL too long"),
 });
 
 interface Team {
