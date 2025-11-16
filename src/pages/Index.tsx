@@ -104,7 +104,7 @@ const Index = () => {
       <div className="border-t border-border/50">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <Link to="/auth">
+            <Link to="/admin/login">
               <Button variant="outline" className="border-muted-foreground/30 hover:bg-muted/50">
                 <Shield className="w-4 h-4 mr-2" />
                 Admin Panel
