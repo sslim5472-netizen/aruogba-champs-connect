@@ -14,6 +14,7 @@ import TopScorers from "./pages/TopScorers";
 import TopAssists from "./pages/TopAssists";
 import TopYellowCards from "./pages/TopYellowCards";
 import TopRedCards from "./pages/TopRedCards";
+import Standings from "./pages/Standings";
 import Voting from "./pages/Voting";
 import Media from "./pages/Media";
 import MotmAwards from "./pages/MotmAwards";
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/stats/top-assists" element={<TopAssists />} />
             <Route path="/stats/top-yellow-cards" element={<TopYellowCards />} />
             <Route path="/stats/top-red-cards" element={<TopRedCards />} />
+            <Route path="/standings" element={<Standings />} />
             <Route path="/voting" element={<Voting />} />
             <Route path="/media" element={<Media />} />
             <Route path="/motm" element={<MotmAwards />} />

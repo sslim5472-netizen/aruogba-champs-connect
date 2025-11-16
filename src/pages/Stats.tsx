@@ -153,7 +153,7 @@ const Stats = () => {
           {/* Standings Table - MOVED TO TOP */}
           <div 
             className="glass-card p-6 rounded-xl md:col-span-2 cursor-pointer hover:glow-effect transition-shadow"
-            onClick={() => navigate("/teams")}
+            onClick={() => navigate("/standings")}
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -162,7 +162,7 @@ const Stats = () => {
                 </div>
                 <h2 className="text-2xl font-heading">League Standings</h2>
               </div>
-              <span className="text-sm text-muted-foreground">View All Teams →</span>
+              <span className="text-sm text-muted-foreground">View Full Table →</span>
             </div>
             
             <div className="overflow-x-auto">
