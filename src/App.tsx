@@ -16,6 +16,7 @@ import TopYellowCards from "./pages/TopYellowCards";
 import TopRedCards from "./pages/TopRedCards";
 import Voting from "./pages/Voting";
 import Media from "./pages/Media";
+import MotmAwards from "./pages/MotmAwards";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import AdminManagement from "./pages/AdminManagement";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/stats/top-red-cards" element={<TopRedCards />} />
             <Route path="/voting" element={<Voting />} />
             <Route path="/media" element={<Media />} />
+            <Route path="/motm" element={<MotmAwards />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/manage" element={<AdminManagement />} />

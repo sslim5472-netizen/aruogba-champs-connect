@@ -234,6 +234,42 @@ export type Database = {
           },
         ]
       }
+      motm_awards: {
+        Row: {
+          id: string
+          match_id: string
+          player_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          match_id: string
+          player_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          match_id?: string
+          player_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "motm_awards_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: true
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "motm_awards_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       players: {
         Row: {
           assists: number | null

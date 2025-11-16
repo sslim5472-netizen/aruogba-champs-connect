@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Trophy, Users, Calendar, BarChart3, Vote, Radio, LogIn, LogOut, Film } from "lucide-react";
+import { Trophy, Users, Calendar, BarChart3, Vote, Radio, LogIn, LogOut, Film, Award } from "lucide-react";
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ const Navigation = () => {
     { path: "/stats", label: "Stats", icon: BarChart3 },
     { path: "/voting", label: "Vote", icon: Vote },
     { path: "/media", label: "Media", icon: Film },
+    { path: "/motm", label: "MOTM", icon: Award },
   ];
 
   return (
@@ -39,14 +40,14 @@ const Navigation = () => {
               <Link
                 key={path}
                 to={path}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs ${
                   location.pathname === path
                     ? "bg-gradient-to-r from-primary to-accent text-white"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                <span className="hidden md:inline text-sm font-heading">{label}</span>
+                <span className="hidden lg:inline font-heading">{label}</span>
               </Link>
               ))}
             
@@ -54,14 +55,14 @@ const Navigation = () => {
               <>
                 <Link
                   to="/admin"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs ${
                     location.pathname.startsWith('/admin')
                       ? "bg-gradient-to-r from-primary to-accent text-white"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
                   <Trophy className="w-4 h-4" />
-                  <span className="hidden md:inline text-sm font-heading">Admin</span>
+                  <span className="hidden lg:inline font-heading">Admin</span>
                 </Link>
                 <Button
                   onClick={() => signOut()}
