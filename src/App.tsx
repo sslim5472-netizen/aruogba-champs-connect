@@ -15,8 +15,7 @@ import TopAssists from "./pages/TopAssists";
 import TopYellowCards from "./pages/TopYellowCards";
 import TopRedCards from "./pages/TopRedCards";
 import Voting from "./pages/Voting";
-import Highlights from "./pages/Highlights";
-import Gallery from "./pages/Gallery";
+import Media from "./pages/Media";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import AdminManagement from "./pages/AdminManagement";
@@ -44,8 +43,7 @@ const App = () => (
             <Route path="/stats/top-yellow-cards" element={<TopYellowCards />} />
             <Route path="/stats/top-red-cards" element={<TopRedCards />} />
             <Route path="/voting" element={<Voting />} />
-            <Route path="/highlights" element={<Highlights />} />
-            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/media" element={<Media />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/manage" element={<AdminManagement />} />

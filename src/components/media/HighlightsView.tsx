@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { Play, Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -12,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const Highlights = () => {
+const HighlightsView = () => {
   const [filterTeam, setFilterTeam] = useState<string>("all");
 
   const { data: teams } = useQuery({
@@ -28,7 +26,7 @@ const Highlights = () => {
     },
   });
 
-  const { data: highlights } = useQuery({
+  const { data: highlights, isLoading } = useQuery({
     queryKey: ['highlights', filterTeam],
     queryFn: async () => {
       let query = supabase
@@ -61,38 +59,27 @@ const Highlights = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <Navigation />
-      
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-heading gradient-text mb-4">
-            Match Highlights
-          </h1>
-          <p className="text-muted-foreground">
-            Relive the best moments from the tournament
-          </p>
-        </div>
+    <div>
+      <div className="flex items-center gap-4 mb-8 max-w-md mx-auto">
+        <Filter className="w-5 h-5 text-muted-foreground" />
+        <Select value={filterTeam} onValueChange={setFilterTeam}>
+          <SelectTrigger>
+            <SelectValue placeholder="Filter by team" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Teams</SelectItem>
+            {teams?.map((team) => (
+              <SelectItem key={team.id} value={team.id}>
+                {team.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* Filter */}
-        <div className="flex items-center gap-4 mb-8 max-w-md mx-auto">
-          <Filter className="w-5 h-5 text-muted-foreground" />
-          <Select value={filterTeam} onValueChange={setFilterTeam}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by team" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Teams</SelectItem>
-              {teams?.map((team) => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Highlights Grid */}
+      {isLoading ? (
+        <div className="text-center text-muted-foreground">Loading highlights...</div>
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {highlights?.map((highlight) => (
             <div key={highlight.id} className="glass-card rounded-xl overflow-hidden group hover:glow-effect transition-all">
@@ -103,6 +90,7 @@ const Highlights = () => {
                     className="w-full h-full"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
+                    title={highlight.title}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
@@ -114,7 +102,7 @@ const Highlights = () => {
               <div className="p-4">
                 <h3 className="font-heading text-lg mb-2">{highlight.title}</h3>
                 {highlight.description && (
-                  <p className="text-sm text-muted-foreground mb-3">{highlight.description}</p>
+                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{highlight.description}</p>
                 )}
                 
                 {highlight.match && (
@@ -140,15 +128,15 @@ const Highlights = () => {
             </div>
           ))}
         </div>
+      )}
 
-        {highlights?.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No highlights available yet
-          </div>
-        )}
-      </div>
+      {highlights?.length === 0 && !isLoading && (
+        <div className="text-center py-12 text-muted-foreground">
+          No highlights available yet.
+        </div>
+      )}
     </div>
   );
 };
 
-export default Highlights;
+export default HighlightsView;
