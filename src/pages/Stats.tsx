@@ -3,18 +3,94 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Trophy, Target, Shield, AlertTriangle, AlertOctagon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+
+// Import logos for fallback display
+import airwayLogo from "@/assets/airway-fc.jpg";
+import knightsLogo from "@/assets/knights-fc.jpg";
+import starsLogo from "@/assets/stars-fc.jpg";
+import spartaLogo from "@/assets/sparta-fc.jpg";
+import kingsLogo from "@/assets/kings-fc.jpg";
+import enjoymentLogo from "@/assets/enjoyment-fc.jpg";
+
+interface TeamStat {
+  id: string;
+  name: string;
+  logo_url: string;
+  wins: number;
+  draws: number;
+  losses: number;
+  goals_for: number;
+  goals_against: number;
+}
+
+interface PlayerStat {
+  name: string;
+  goals: number;
+  assists: number;
+  yellow_cards: number;
+  red_cards: number;
+  teams: { name: string };
+}
 
 const Stats = () => {
   const navigate = useNavigate();
-  const [topScorers, setTopScorers] = useState<any[]>([]);
-  const [topAssists, setTopAssists] = useState<any[]>([]);
-  const [topYellowCards, setTopYellowCards] = useState<any[]>([]);
-  const [topRedCards, setTopRedCards] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [topScorers, setTopScorers] = useState<PlayerStat[]>([]);
+  const [topAssists, setTopAssists] = useState<PlayerStat[]>([]);
+  const [topYellowCards, setTopYellowCards] = useState<PlayerStat[]>([]);
+  const [topRedCards, setTopRedCards] = useState<PlayerStat[]>([]);
 
   const getTeamSlug = (teamName: string) => {
     return teamName.toLowerCase().replace(/\s+/g, '-');
   };
+
+  // Helper function for logos (reusing logic from TeamProfile)
+  const getTeamLogo = (teamName: string, logoUrl: string) => {
+    const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '-');
+    const logoMap: Record<string, string> = {
+        'airway-fc': airwayLogo,
+        'knights-fc': knightsLogo,
+        'stars-fc': starsLogo,
+        'sparta-fc': spartaLogo,
+        'kings-fc': kingsLogo,
+        'enjoyment-fc': enjoymentLogo,
+    };
+    const normalized = teamName ? normalize(teamName) : '';
+    const fallbackLogo = normalized ? logoMap[normalized] : undefined;
+    const isValidUrl = (s?: string | null) => Boolean(s && /^https?:\/\//.test(s));
+    return isValidUrl(logoUrl) ? logoUrl : (fallbackLogo || '/placeholder.svg');
+  };
+
+  // Fetch all teams for standings
+  const { data: teamsData, isLoading: teamsLoading } = useQuery({
+    queryKey: ["league-standings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("teams")
+        .select("id, name, logo_url, wins, draws, losses, goals_for, goals_against")
+        .order("name");
+      if (error) throw error;
+      return data as TeamStat[];
+    },
+  });
+
+  // Calculate standings and sort
+  const standings = teamsData
+    ? teamsData
+        .map(team => ({
+            ...team,
+            played: (team.wins || 0) + (team.draws || 0) + (team.losses || 0),
+            points: (team.wins || 0) * 3 + (team.draws || 0) * 1,
+            goal_difference: (team.goals_for || 0) - (team.goals_against || 0),
+        }))
+        .sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.goal_difference !== a.goal_difference) return b.goal_difference - a.goal_difference;
+            return a.name.localeCompare(b.name); // Alphabetical tiebreaker
+        })
+    : [];
+
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -46,15 +122,17 @@ const Stats = () => {
         .order("red_cards", { ascending: false })
         .limit(5);
 
-      if (scorers) setTopScorers(scorers);
-      if (assists) setTopAssists(assists);
-      if (yellowCards) setTopYellowCards(yellowCards);
-      if (redCards) setTopRedCards(redCards);
-      setLoading(false);
+      if (scorers) setTopScorers(scorers as PlayerStat[]);
+      if (assists) setTopAssists(assists as PlayerStat[]);
+      if (yellowCards) setTopYellowCards(yellowCards as PlayerStat[]);
+      if (redCards) setTopRedCards(redCards as PlayerStat[]);
+      setLoadingStats(false);
     };
 
     fetchStats();
   }, []);
+
+  const loading = teamsLoading || loadingStats;
 
   return (
     <div className="min-h-screen">
@@ -71,6 +149,74 @@ const Stats = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-scale-in">
+          
+          {/* Standings Table - MOVED TO TOP */}
+          <div 
+            className="glass-card p-6 rounded-xl md:col-span-2 cursor-pointer hover:glow-effect transition-shadow"
+            onClick={() => navigate("/teams")}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-primary to-accent p-3 rounded-lg">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-heading">League Standings</h2>
+              </div>
+              <span className="text-sm text-muted-foreground">View All Teams →</span>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-3 font-heading text-sm">#</th>
+                    <th className="text-left p-3 font-heading text-sm">Team</th>
+                    <th className="text-center p-3 font-heading text-sm">P</th>
+                    <th className="text-center p-3 font-heading text-sm">W</th>
+                    <th className="text-center p-3 font-heading text-sm">D</th>
+                    <th className="text-center p-3 font-heading text-sm">L</th>
+                    <th className="text-center p-3 font-heading text-sm">GD</th>
+                    <th className="text-center p-3 font-heading text-sm">Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={8} className="text-center p-6 text-muted-foreground">Loading standings...</td>
+                    </tr>
+                  ) : (
+                    standings.map((team, index) => (
+                      <tr 
+                        key={team.id} 
+                        className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering parent card click
+                          navigate(`/teams/${getTeamSlug(team.name)}`);
+                        }}
+                      >
+                        <td className="p-3 text-muted-foreground">{index + 1}</td>
+                        <td className="p-3 font-heading flex items-center gap-3">
+                          <img 
+                            src={getTeamLogo(team.name, team.logo_url)} 
+                            alt={team.name}
+                            className="w-6 h-6 rounded-full object-contain border border-border"
+                          />
+                          {team.name}
+                        </td>
+                        <td className="p-3 text-center">{team.played}</td>
+                        <td className="p-3 text-center">{team.wins}</td>
+                        <td className="p-3 text-center">{team.draws}</td>
+                        <td className="p-3 text-center">{team.losses}</td>
+                        <td className="p-3 text-center">{team.goal_difference > 0 ? `+${team.goal_difference}` : team.goal_difference}</td>
+                        <td className="p-3 text-center font-heading text-primary">{team.points}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
           {/* Top Scorers */}
           <div 
             className="glass-card p-6 rounded-xl cursor-pointer hover:shadow-lg transition-shadow"
@@ -233,51 +379,6 @@ const Stats = () => {
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Standings Table */}
-          <div className="glass-card p-6 rounded-xl md:col-span-2">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-gradient-to-br from-primary to-accent p-3 rounded-lg">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-heading">League Standings</h2>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-3 font-heading text-sm">#</th>
-                    <th className="text-left p-3 font-heading text-sm">Team</th>
-                    <th className="text-center p-3 font-heading text-sm">P</th>
-                    <th className="text-center p-3 font-heading text-sm">W</th>
-                    <th className="text-center p-3 font-heading text-sm">D</th>
-                    <th className="text-center p-3 font-heading text-sm">L</th>
-                    <th className="text-center p-3 font-heading text-sm">GD</th>
-                    <th className="text-center p-3 font-heading text-sm">Pts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {["Airway FC", "Knights FC", "Stars FC", "Sparta FC", "Kings FC", "Enjoyment FC"].map((team, index) => (
-                    <tr 
-                      key={team} 
-                      className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/teams/${getTeamSlug(team)}`)}
-                    >
-                      <td className="p-3 text-muted-foreground">{index + 1}</td>
-                      <td className="p-3 font-heading">{team}</td>
-                      <td className="p-3 text-center">0</td>
-                      <td className="p-3 text-center">0</td>
-                      <td className="p-3 text-center">0</td>
-                      <td className="p-3 text-center">0</td>
-                      <td className="p-3 text-center">0</td>
-                      <td className="p-3 text-center font-heading text-primary">0</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
       </div>

@@ -342,6 +342,11 @@ export type Database = {
           logo_url: string
           name: string
           updated_at: string
+          wins: number
+          draws: number
+          losses: number
+          goals_for: number
+          goals_against: number
         }
         Insert: {
           _types_ping?: boolean
@@ -352,6 +357,11 @@ export type Database = {
           logo_url: string
           name: string
           updated_at?: string
+          wins?: number
+          draws?: number
+          losses?: number
+          goals_for?: number
+          goals_against?: number
         }
         Update: {
           _types_ping?: boolean
@@ -362,6 +372,11 @@ export type Database = {
           logo_url?: string
           name?: string
           updated_at?: string
+          wins?: number
+          draws?: number
+          losses?: number
+          goals_for?: number
+          goals_against?: number
         }
         Relationships: []
       }
