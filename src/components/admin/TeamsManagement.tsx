@@ -19,7 +19,7 @@ import enjoymentLogo from "@/assets/enjoyment-fc.jpg";
 
 const teamSchema = z.object({
   name: z.string().trim().min(1, "Team name is required").max(100, "Team name must be less than 100 characters"),
-  captain: z.string().trim().min(1, "Captain name is required").max(100, "Captain name must be less than 100 characters"),
+  captain_name: z.string().trim().min(1, "Captain name is required").max(100, "Captain name must be less than 100 characters"),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color (e.g., #FF0000)"),
   logo_url: z.string().url("Must be a valid URL").max(500, "URL too long"),
 });
@@ -27,7 +27,7 @@ const teamSchema = z.object({
 interface Team {
   id: string;
   name: string;
-  captain: string;
+  captain_name: string;
   color: string;
   logo_url: string;
 }
@@ -38,7 +38,7 @@ export const TeamsManagement = () => {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    captain: "",
+    captain_name: "",
     color: "#007BFF",
     logo_url: "",
   });
@@ -116,7 +116,7 @@ export const TeamsManagement = () => {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", captain: "", color: "#007BFF", logo_url: "" });
+    setFormData({ name: "", captain_name: "", color: "#007BFF", logo_url: "" });
     setIsEditing(false);
     setEditingTeam(null);
   };
@@ -125,7 +125,7 @@ export const TeamsManagement = () => {
     setEditingTeam(team);
     setFormData({
       name: team.name,
-      captain: team.captain,
+      captain_name: team.captain_name,
       color: team.color,
       logo_url: team.logo_url,
     });
@@ -188,11 +188,11 @@ export const TeamsManagement = () => {
               </div>
 
               <div>
-                <Label htmlFor="captain">Captain</Label>
+                <Label htmlFor="captain_name">Captain</Label>
                 <Input
-                  id="captain"
-                  value={formData.captain}
-                  onChange={(e) => setFormData({ ...formData, captain: e.target.value })}
+                  id="captain_name"
+                  value={formData.captain_name}
+                  onChange={(e) => setFormData({ ...formData, captain_name: e.target.value })}
                   required
                 />
               </div>
@@ -253,7 +253,7 @@ export const TeamsManagement = () => {
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-lg mb-1">{team.name}</h3>
                 <p className="text-sm text-muted-foreground mb-1">
-                  Captain: <span className="text-foreground">{team.captain}</span>
+                  Captain: <span className="text-foreground">{team.captain_name}</span>
                 </p>
                 <div 
                   className="text-xs text-muted-foreground flex items-center gap-2"

@@ -114,7 +114,7 @@ const TeamProfile = () => {
             <div className="flex-1 text-center md:text-left">
               <h1 className="text-4xl md:text-5xl font-heading gradient-text mb-2">{team.name}</h1>
               <p className="text-xl text-muted-foreground mb-4">
-                Captain: <span className="text-silver">{team.captain}</span>
+                Captain: <span className="text-silver">{team.captain_name}</span>
               </p>
               
               <div className="flex flex-wrap gap-4 justify-center md:justify-start">

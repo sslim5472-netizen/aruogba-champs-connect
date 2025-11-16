@@ -335,7 +335,7 @@ export type Database = {
       teams: {
         Row: {
           _types_ping: boolean
-          captain: string
+          captain_name: string
           color: string
           created_at: string
           id: string
@@ -345,7 +345,7 @@ export type Database = {
         }
         Insert: {
           _types_ping?: boolean
-          captain: string
+          captain_name: string
           color: string
           created_at?: string
           id?: string
@@ -355,7 +355,7 @@ export type Database = {
         }
         Update: {
           _types_ping?: boolean
-          captain?: string
+          captain_name?: string
           color?: string
           created_at?: string
           id?: string

@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 
 interface TeamCardProps {
   name: string;
-  captain: string;
+  captain_name: string;
   logo: string;
   color: string;
 }
 
-const TeamCard = ({ name, captain, logo, color }: TeamCardProps) => {
+const TeamCard = ({ name, captain_name, logo, color }: TeamCardProps) => {
   return (
     <Link to={`/teams/${name.toLowerCase().replace(/\s+/g, "-")}`}>
       <div className="glass-card p-6 rounded-xl hover:scale-105 transition-all duration-300 group cursor-pointer">
@@ -27,7 +27,7 @@ const TeamCard = ({ name, captain, logo, color }: TeamCardProps) => {
         
         <h3 className="text-xl font-heading text-center mb-2">{name}</h3>
         <p className="text-sm text-muted-foreground text-center">
-          Captain: <span className="text-silver">{captain}</span>
+          Captain: <span className="text-silver">{captain_name}</span>
         </p>
         
         <div className="mt-4 pt-4 border-t border-border/50">
