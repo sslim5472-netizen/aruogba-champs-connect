@@ -31,7 +31,7 @@ const Navigation = () => {
             />
             <div className="hidden md:block">
               <div className="font-heading text-lg gradient-text">ARUOGBA FC</div>
-              <div className="text-xs text-muted-foreground">Tournament 2025</div>
+              <div className="text-xs text-muted-foreground">Champions League 2025</div>
             </div>
           </Link>
 
