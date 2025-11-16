@@ -7,6 +7,7 @@ import { TeamsManagement } from "@/components/admin/TeamsManagement";
 import { PlayersManagement } from "@/components/admin/PlayersManagement";
 import { MatchesManagement } from "@/components/admin/MatchesManagement";
 import { HighlightsManagement } from "@/components/admin/HighlightsManagement";
+import { PhotosManagement } from "@/components/admin/PhotosManagement";
 import { Shield, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -81,11 +82,12 @@ const AdminManagement = () => {
           </div>
 
           <Tabs defaultValue="teams" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 glass-card">
+            <TabsList className="grid w-full grid-cols-5 glass-card">
               <TabsTrigger value="teams">Teams</TabsTrigger>
               <TabsTrigger value="players">Players</TabsTrigger>
               <TabsTrigger value="matches">Matches</TabsTrigger>
               <TabsTrigger value="highlights">Highlights</TabsTrigger>
+              <TabsTrigger value="photos">Photos</TabsTrigger>
             </TabsList>
 
             <TabsContent value="teams">
@@ -102,6 +104,10 @@ const AdminManagement = () => {
 
             <TabsContent value="highlights">
               <HighlightsManagement />
+            </TabsContent>
+            
+            <TabsContent value="photos">
+              <PhotosManagement />
             </TabsContent>
           </Tabs>
         </div>
