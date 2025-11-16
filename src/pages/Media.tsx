@@ -1,7 +1,7 @@
 import Navigation from "@/components/Navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import HighlightsView from "@/components/HighlightsView";
-import PhotosView from "@/components/PhotosView";
+import HighlightsView from "@/components/media/HighlightsView";
+import PhotosView from "@/components/media/PhotosView";
 
 const Media = () => {
   return (
