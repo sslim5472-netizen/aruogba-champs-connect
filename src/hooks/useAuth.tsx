@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-// Removed import for 'Database' and 'Tables' as we're defining ProfileRow locally
+// Removed import for 'Database' and 'Tables' as we're defining types locally for clarity
 
 interface AuthContextType {
   user: User | null;
@@ -41,19 +41,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [lastName, setLastName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Define the expected row type for profiles directly, matching src/integrations/supabase/types.ts
-  interface ProfileRow {
-    id: string;
+  // Define the expected shape of the data returned by the profile select query
+  // This is a direct definition to bypass issues with complex generated types.
+  interface FetchedProfileData {
     first_name: string | null;
     last_name: string | null;
-    avatar_url: string | null;
-    created_at: string;
-    updated_at: string;
   }
 
   const fetchUserProfile = async (userId: string) => {
     const { data: profileData, error: profileError } = await supabase
-      .from('profiles') // No need for explicit cast here, as 'profiles' is a string literal
+      .from('profiles' as 'profiles') // Explicitly cast to the literal type 'profiles'
       .select('first_name, last_name')
       .eq('id', userId)
       .single();
@@ -63,8 +60,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setFirstName(null);
       setLastName(null);
     } else if (profileData) {
-      // Assert profileData to ProfileRow after checking for error
-      const profile = profileData as ProfileRow;
+      // profileData will be an object with 'first_name' and 'last_name'
+      // We can assert it to our local interface for clarity.
+      const profile = profileData as FetchedProfileData;
       setFirstName(profile.first_name);
       setLastName(profile.last_name);
     }
