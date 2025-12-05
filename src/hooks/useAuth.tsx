@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-// Removed import for 'Database' and 'Tables' as we're defining types locally for clarity
+import { Database } from "@/integrations/supabase/types"; // Import Database type
 
 interface AuthContextType {
   user: User | null;
@@ -41,30 +41,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [lastName, setLastName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Define the expected shape of the data returned by the profile select query
-  // This is a direct definition to bypass issues with complex generated types.
-  interface FetchedProfileData {
+  // Define the expected type for the data returned by the profile select query
+  type ProfileSelectData = {
     first_name: string | null;
     last_name: string | null;
-  }
+  } | null; // It can be null if .single() finds no record
 
   const fetchUserProfile = async (userId: string) => {
     const { data: profileData, error: profileError } = await supabase
-      .from('profiles' as 'profiles') // Explicitly cast to the literal type 'profiles'
+      .from('profiles' as keyof Database['public']['Tables'])
       .select('first_name, last_name')
       .eq('id', userId)
-      .single();
+      .single<ProfileSelectData>(); // Explicitly type the single() return data
 
     if (profileError) {
       console.error("Error fetching profile:", profileError);
       setFirstName(null);
       setLastName(null);
     } else if (profileData) {
-      // profileData will be an object with 'first_name' and 'last_name'
-      // We can assert it to our local interface for clarity.
-      const profile = profileData as FetchedProfileData;
-      setFirstName(profile.first_name);
-      setLastName(profile.last_name);
+      // profileData is now correctly inferred as { first_name: string | null, last_name: string | null }
+      setFirstName(profileData.first_name);
+      setLastName(profileData.last_name);
+    } else {
+      // Handle case where no profile is found (profileData is null, but no error)
+      setFirstName(null);
+      setLastName(null);
     }
   };
 
