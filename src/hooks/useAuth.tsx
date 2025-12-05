@@ -2,14 +2,17 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+// Removed import for 'Database' and 'Tables' as we're defining ProfileRow locally
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: string | null;
   teamId: string | null;
+  firstName: string | null;
+  lastName: string | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
 }
@@ -19,6 +22,8 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   userRole: null,
   teamId: null,
+  firstName: null,
+  lastName: null,
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
   signOut: async () => {},
@@ -32,57 +37,96 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [teamId, setTeamId] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Define the expected row type for profiles directly, matching src/integrations/supabase/types.ts
+  interface ProfileRow {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+    created_at: string;
+    updated_at: string;
+  }
+
+  const fetchUserProfile = async (userId: string) => {
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles') // No need for explicit cast here, as 'profiles' is a string literal
+      .select('first_name, last_name')
+      .eq('id', userId)
+      .single();
+
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+      setFirstName(null);
+      setLastName(null);
+    } else if (profileData) {
+      // Assert profileData to ProfileRow after checking for error
+      const profile = profileData as ProfileRow;
+      setFirstName(profile.first_name);
+      setLastName(profile.last_name);
+    }
+  };
+
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch user role when user signs in
         if (session?.user) {
-          setTimeout(async () => {
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role, team_id')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            if (roleData) {
-              setUserRole(roleData.role);
-              setTeamId(roleData.team_id);
-            }
-          }, 0);
+          // Fetch user role
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role, team_id')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (roleData) {
+            setUserRole(roleData.role);
+            setTeamId(roleData.team_id);
+          } else {
+            setUserRole(null);
+            setTeamId(null);
+          }
+
+          // Fetch user profile (first_name, last_name)
+          await fetchUserProfile(session.user.id);
+
         } else {
           setUserRole(null);
           setTeamId(null);
+          setFirstName(null);
+          setLastName(null);
         }
+        setLoading(false);
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Check for existing session on initial load
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        supabase
+        // Fetch user role
+        const { data: roleData } = await supabase
           .from('user_roles')
           .select('role, team_id')
           .eq('user_id', session.user.id)
-          .single()
-          .then(({ data: roleData }) => {
-            if (roleData) {
-              setUserRole(roleData.role);
-              setTeamId(roleData.team_id);
-            }
-            setLoading(false);
-          });
-      } else {
-        setLoading(false);
+          .single();
+        
+        if (roleData) {
+          setUserRole(roleData.role);
+          setTeamId(roleData.team_id);
+        }
+
+        // Fetch user profile (first_name, last_name)
+        await fetchUserProfile(session.user.id);
       }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -96,13 +140,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     const redirectUrl = `${window.location.origin}/`;
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+        },
       },
     });
     return { error };
@@ -113,7 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, userRole, teamId, signIn, signUp, signOut, loading }}>
+    <AuthContext.Provider value={{ user, session, userRole, teamId, firstName, lastName, signIn, signUp, signOut, loading }}>
       {children}
     </AuthContext.Provider>
   );

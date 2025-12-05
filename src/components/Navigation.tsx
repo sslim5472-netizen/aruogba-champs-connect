@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 const Navigation = () => {
   const location = useLocation();
-  const { user, userRole, signOut } = useAuth();
+  const { user, userRole, firstName, lastName, signOut } = useAuth();
   
   const navItems = [
     { path: "/", label: "Home", icon: Trophy },
@@ -82,7 +82,9 @@ const Navigation = () => {
                 className="text-muted-foreground hover:text-foreground"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="hidden md:inline text-sm font-heading ml-2">Logout</span>
+                <span className="hidden md:inline text-sm font-heading ml-2">
+                  {firstName && lastName ? `${firstName} ${lastName}` : user.email} (Logout)
+                </span>
               </Button>
             ) : (
               <Link to="/auth">

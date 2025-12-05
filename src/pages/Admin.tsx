@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const Admin = () => {
-  const { user, userRole, signOut, loading } = useAuth();
+  const { user, userRole, firstName, lastName, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
 
@@ -104,7 +104,9 @@ const Admin = () => {
                 </div>
                 <div>
                   <h1 className="text-3xl font-heading gradient-text">Admin Dashboard</h1>
-                  <p className="text-muted-foreground capitalize">Role: {userRole || 'viewer'}</p>
+                  <p className="text-muted-foreground capitalize">
+                    Welcome, {firstName && lastName ? `${firstName} ${lastName}` : user.email} (Role: {userRole || 'viewer'})
+                  </p>
                 </div>
               </div>
               
