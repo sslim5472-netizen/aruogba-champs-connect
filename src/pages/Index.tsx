@@ -22,11 +22,11 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Navigation />
       
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden flex-grow">
         <div className="absolute inset-0 stars-bg opacity-20"></div>
         <div className="container mx-auto px-4 py-20 relative">
           <div className="text-center mb-12 animate-fade-in">
@@ -113,14 +113,6 @@ const Index = () => {
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="border-t border-border/50 py-6 text-center text-sm text-muted-foreground">
-        <p>© 2025 Built and designed by BuildGrid Limited. All rights reserved.</p>
-        <p className="mt-2 max-w-3xl mx-auto">
-          The Aruogba FC word, the Aruogba FC logo and all marks related to Aruogba FC in house competition, are protected by trademarks and/or copyright of Aruogba FC. No use for commercial purposes may be made of such trademarks. Use of Aruogba.fc signifies your agreement to the Terms and Conditions and Privacy Policy.
-        </p>
-      </footer>
     </div>
   );
 };
