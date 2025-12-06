@@ -160,6 +160,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (error) {
       console.error("Error signing out:", error);
     }
+    // Explicitly clear local storage to ensure session is completely removed
+    localStorage.clear();
   };
 
   return (
