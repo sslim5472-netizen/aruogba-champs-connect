@@ -11,6 +11,7 @@ const Admin = () => {
   const { user, userRole, firstName, lastName, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false); // New state for local sign out
 
   useEffect(() => {
     setMounted(true);
@@ -19,15 +20,22 @@ const Admin = () => {
   useEffect(() => {
     if (mounted && !loading) {
       if (!user) {
-        navigate("/admin/login");
+        // If user is null and we were actively signing out from this page, go to home.
+        // Otherwise, if user is null (e.g., not logged in, or logged out from Navigation), go to admin login.
+        if (isSigningOut) {
+          navigate("/");
+          setIsSigningOut(false); // Reset the flag after navigation
+        } else {
+          navigate("/admin/login");
+        }
       } else if (userRole !== 'admin') {
         toast.error("Access denied. Admin privileges required.");
         navigate("/");
       }
     }
-  }, [user, userRole, loading, navigate, mounted]);
+  }, [user, userRole, loading, navigate, mounted, isSigningOut]); // Added isSigningOut to dependencies
 
-  if (loading || !mounted) {
+  if (loading || !mounted || isSigningOut) { // Show loading state if signing out
     return (
       <div className="min-h-screen">
         <Navigation />
@@ -38,13 +46,12 @@ const Admin = () => {
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  // No need for `if (!user) { return null; }` here, as the useEffect handles redirection.
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
+    setIsSigningOut(true); // Indicate that sign out is in progress
+    await signOut(); // This will eventually set user to null, triggering the useEffect
+    // The useEffect will handle the navigation to "/" because isSigningOut is true
   };
 
   const adminCards = [
@@ -114,6 +121,7 @@ const Admin = () => {
                 variant="outline" 
                 onClick={handleSignOut}
                 className="border-destructive/50 hover:bg-destructive/10"
+                disabled={isSigningOut} // Disable button while signing out
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out

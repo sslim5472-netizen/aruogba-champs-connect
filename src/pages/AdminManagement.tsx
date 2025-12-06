@@ -17,6 +17,7 @@ const AdminManagement = () => {
   const { user, userRole, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false); // New state for local sign out
 
   useEffect(() => {
     setMounted(true);
@@ -25,15 +26,20 @@ const AdminManagement = () => {
   useEffect(() => {
     if (mounted && !loading) {
       if (!user) {
-        navigate("/admin/login");
+        if (isSigningOut) {
+          navigate("/");
+          setIsSigningOut(false);
+        } else {
+          navigate("/admin/login");
+        }
       } else if (userRole !== 'admin') {
         toast.error("Access denied. Admin privileges required.");
         navigate("/");
       }
     }
-  }, [user, userRole, loading, navigate, mounted]);
+  }, [user, userRole, loading, navigate, mounted, isSigningOut]);
 
-  if (loading || !mounted) {
+  if (loading || !mounted || isSigningOut) { // Show loading state if signing out
     return (
       <div className="min-h-screen">
         <Navigation />
@@ -44,13 +50,12 @@ const AdminManagement = () => {
     );
   }
 
-  if (!user || userRole !== 'admin') {
-    return null;
-  }
+  // Removed the problematic `if (!user || userRole !== 'admin') { return null; }`
+  // The useEffect above handles the redirection logic.
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
+    setIsSigningOut(true); // Indicate that sign out is in progress
+    await signOut(); // This will eventually set user to null, triggering the useEffect
   };
 
   return (
@@ -75,6 +80,7 @@ const AdminManagement = () => {
                 variant="outline" 
                 onClick={handleSignOut}
                 className="border-destructive/50 hover:bg-destructive/10"
+                disabled={isSigningOut} // Disable button while signing out
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
