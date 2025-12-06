@@ -153,25 +153,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    console.log("Attempting to sign out..."); // Debug log
+    console.log("Attempting to sign out...");
     setLoading(true); // Indicate loading during sign out
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error signing out:", error);
-      toast.error("Failed to sign out: " + error.message); // Provide user feedback
-    } else {
-      toast.success("Successfully logged out!"); // Provide user feedback
+    
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Error signing out from Supabase:", error);
+        toast.error("Failed to sign out: " + error.message);
+      } else {
+        console.log("Successfully signed out from Supabase.");
+        toast.success("Successfully logged out!");
+        
+        // Perform a full page reload to ensure all state is reset cleanly
+        window.location.reload();
+      }
+    } catch (err: any) {
+      console.error("Unexpected error during sign out:", err);
+      toast.error("An unexpected error occurred during logout.");
+    } finally {
+      // Even if reload is called, setting state here ensures consistency
+      // in case the reload is interrupted or behaves unexpectedly in some environments
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+      setTeamId(null);
+      setFirstName(null);
+      setLastName(null);
+      setLoading(false);
+      console.log("Sign out process finalized in hook.");
     }
-    // Explicitly clear local state after Supabase sign out
-    // This will also trigger the onAuthStateChange listener with SIGNED_OUT event
-    setUser(null);
-    setSession(null);
-    setUserRole(null);
-    setTeamId(null);
-    setFirstName(null);
-    setLastName(null);
-    setLoading(false); // Set loading to false after sign out attempt
-    console.log("Sign out process completed. User state cleared."); // Debug log
   };
 
   return (
