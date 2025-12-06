@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Target, AlertTriangle, Trophy } from "lucide-react";
+import { Clock, Target, AlertTriangle, Trophy, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const LiveMatch = () => {
   const navigate = useNavigate();
   const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
+  const [liveStreamUrl, setLiveStreamUrl] = useState<string | null>(null); // State for live stream URL
 
   const { data: liveMatch, refetch } = useQuery({
     queryKey: ['live-match', liveMatchId],
@@ -51,6 +52,11 @@ const LiveMatch = () => {
   useEffect(() => {
     if (liveMatch) {
       setLiveMatchId(liveMatch.id);
+      // Placeholder for live stream URL. In a real app, this would come from the match data.
+      // For example: setLiveStreamUrl(liveMatch.live_stream_url);
+      setLiveStreamUrl("https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1"); // Example YouTube embed
+    } else {
+      setLiveStreamUrl(null);
     }
   }, [liveMatch]);
 
@@ -122,6 +128,25 @@ const LiveMatch = () => {
       <Navigation />
       
       <div className="container mx-auto px-4 py-12">
+        {/* Live Stream Player */}
+        {liveStreamUrl && (
+          <div className="glass-card p-4 rounded-xl mb-8 animate-fade-in">
+            <div className="flex items-center gap-2 mb-4">
+              <Video className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-heading gradient-text">Live Stream</h2>
+            </div>
+            <div className="relative aspect-video w-full rounded-lg overflow-hidden">
+              <iframe
+                src={liveStreamUrl}
+                title="Live Match Stream"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="absolute top-0 left-0 w-full h-full border-0"
+              ></iframe>
+            </div>
+          </div>
+        )}
+
         {/* Live Match Score */}
         <div className="glass-card p-8 rounded-xl mb-8 animate-fade-in">
           <div className="flex items-center justify-center gap-2 mb-6">
