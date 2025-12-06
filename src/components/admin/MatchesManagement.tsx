@@ -41,6 +41,16 @@ interface Match {
   live_stream_url: string | null;
 }
 
+// Helper function to get current local datetime in YYYY-MM-DDTHH:mm format
+const getLocalDatetimeString = (date: Date) => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 export const MatchesManagement = () => {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
@@ -57,12 +67,12 @@ export const MatchesManagement = () => {
   }>({
     home_team_id: "",
     away_team_id: "",
-    match_date: "",
+    match_date: getLocalDatetimeString(new Date()), // Default to current local datetime
     venue: "Main Pitch",
     status: "scheduled",
     home_score: 0,
     away_score: 0,
-    live_stream_url: DEFAULT_LIVE_STREAM_URL, // Set default here
+    live_stream_url: DEFAULT_LIVE_STREAM_URL,
   });
 
   const { data: teams } = useQuery({
@@ -128,12 +138,12 @@ export const MatchesManagement = () => {
     setFormData({
       home_team_id: "",
       away_team_id: "",
-      match_date: "",
+      match_date: getLocalDatetimeString(new Date()), // Reset to current local datetime
       venue: "Main Pitch",
       status: "scheduled",
       home_score: 0,
       away_score: 0,
-      live_stream_url: DEFAULT_LIVE_STREAM_URL, // Reset to default here
+      live_stream_url: DEFAULT_LIVE_STREAM_URL,
     });
     setIsEditing(false);
     setEditingMatch(null);
