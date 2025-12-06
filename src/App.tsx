@@ -31,7 +31,7 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true }}>
           <div className="flex flex-col min-h-screen"> {/* Added flex container for sticky footer */}
             <div className="flex-grow"> {/* Content area that grows */}
               <Routes>
