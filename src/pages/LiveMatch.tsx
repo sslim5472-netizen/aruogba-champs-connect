@@ -9,7 +9,6 @@ import { useNavigate } from "react-router-dom";
 const LiveMatch = () => {
   const navigate = useNavigate();
   const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
-  // Removed local liveStreamUrl state, now it comes from liveMatch.live_stream_url
 
   const { data: liveMatch, refetch } = useQuery({
     queryKey: ['live-match', liveMatchId],
@@ -52,7 +51,6 @@ const LiveMatch = () => {
   useEffect(() => {
     if (liveMatch) {
       setLiveMatchId(liveMatch.id);
-      // Now setting liveStreamUrl directly from liveMatch data
     }
   }, [liveMatch]);
 
@@ -119,14 +117,21 @@ const LiveMatch = () => {
     }
   };
 
-  // Helper to get YouTube embed URL from various YouTube link formats
-  const getYouTubeEmbedUrl = (url: string | null) => {
+  // Helper to get embed URL from various video link formats (YouTube, Livepush.io, etc.)
+  const getEmbedUrl = (url: string | null) => {
     if (!url) return null;
-    const videoId = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&\s]+)/)?.[1];
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    
+    // Check for YouTube URL
+    const youtubeMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&\s]+)/)?.[1];
+    if (youtubeMatch) {
+      return `https://www.youtube.com/embed/${youtubeMatch}`;
+    }
+
+    // For Livepush.io or other direct embed URLs, return as-is
+    return url;
   };
 
-  const embedUrl = getYouTubeEmbedUrl(liveMatch.live_stream_url);
+  const embedUrl = getEmbedUrl(liveMatch.live_stream_url);
 
   return (
     <div className="min-h-screen">
@@ -143,10 +148,12 @@ const LiveMatch = () => {
             <div className="relative aspect-video w-full rounded-lg overflow-hidden">
               <iframe
                 src={embedUrl}
-                title="Live Match Stream"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
+                width="100%" // Use 100% width for responsiveness
+                height="100%" // Use 100% height for responsiveness
+                allowFullScreen={true}
+                frameBorder="0"
                 className="absolute top-0 left-0 w-full h-full border-0"
+                title="Live Match Stream"
               ></iframe>
             </div>
           </div>
