@@ -2,8 +2,20 @@ import Navigation from "@/components/Navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import HighlightsView from "@/components/media/HighlightsView";
 import PhotosView from "@/components/media/PhotosView";
+import { useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 const Media = () => {
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState("highlights");
+
+  // If accessed via /highlights, default to highlights tab
+  useEffect(() => {
+    if (location.pathname === "/highlights") {
+      setActiveTab("highlights");
+    }
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen">
       <Navigation />
@@ -18,7 +30,7 @@ const Media = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="highlights" className="space-y-6">
+        <Tabs defaultValue="highlights" className="space-y-6" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2 glass-card max-w-md mx-auto">
             <TabsTrigger value="highlights">Match Highlights</TabsTrigger>
             <TabsTrigger value="photos">Photo Gallery</TabsTrigger>

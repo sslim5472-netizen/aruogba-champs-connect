@@ -15,7 +15,7 @@ import TopYellowCards from "./pages/TopYellowCards";
 import TopRedCards from "./pages/TopRedCards";
 import Standings from "./pages/Standings";
 import Voting from "./pages/Voting";
-import Media from "./pages/Media";
+import Media from "./pages/Media"; // Import the Media component
 import MotmAwards from "./pages/MotmAwards";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
@@ -47,7 +47,8 @@ const App = () => (
                 <Route path="/stats/top-red-cards" element={<TopRedCards />} />
                 <Route path="/standings" element={<Standings />} />
                 <Route path="/voting" element={<Voting />} />
-                <Route path="/media" element={<Media />} />
+                <Route path="/media" element={<Media />} /> {/* Existing media route */}
+                <Route path="/highlights" element={<Media />} /> {/* Add direct route for highlights */}
                 <Route path="/motm" element={<MotmAwards />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
