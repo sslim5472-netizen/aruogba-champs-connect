@@ -113,6 +113,11 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-border/50 py-6 text-center text-sm text-muted-foreground">
+        Built and designed by BUILDGRID
+      </footer>
     </div>
   );
 };
