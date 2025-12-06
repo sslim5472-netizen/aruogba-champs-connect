@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { z } from "zod";
 
+const DEFAULT_LIVE_STREAM_URL = "https://player.livepush.io/live/emqEku0-FJ7AZA7V";
+
 const matchSchema = z.object({
   home_team_id: z.string().uuid("Must select home team"),
   away_team_id: z.string().uuid("Must select away team"),
@@ -19,7 +21,7 @@ const matchSchema = z.object({
   status: z.enum(["scheduled", "live", "finished"]),
   home_score: z.coerce.number().int().min(0, "Score cannot be negative"),
   away_score: z.coerce.number().int().min(0, "Score cannot be negative"),
-  live_stream_url: z.string().url("Must be a valid URL").optional().or(z.literal("")), // Added live_stream_url
+  live_stream_url: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 }).refine((data) => data.home_team_id !== data.away_team_id, {
   message: "Home and away teams must be different",
   path: ["away_team_id"],
@@ -36,7 +38,7 @@ interface Match {
   away_score: number;
   home_team: { name: string };
   away_team: { name: string };
-  live_stream_url: string | null; // Added live_stream_url
+  live_stream_url: string | null;
 }
 
 export const MatchesManagement = () => {
@@ -51,7 +53,7 @@ export const MatchesManagement = () => {
     status: "scheduled" | "live" | "finished";
     home_score: number;
     away_score: number;
-    live_stream_url: string; // Added live_stream_url
+    live_stream_url: string;
   }>({
     home_team_id: "",
     away_team_id: "",
@@ -60,7 +62,7 @@ export const MatchesManagement = () => {
     status: "scheduled",
     home_score: 0,
     away_score: 0,
-    live_stream_url: "", // Added live_stream_url
+    live_stream_url: DEFAULT_LIVE_STREAM_URL, // Set default here
   });
 
   const { data: teams } = useQuery({
@@ -131,7 +133,7 @@ export const MatchesManagement = () => {
       status: "scheduled",
       home_score: 0,
       away_score: 0,
-      live_stream_url: "", // Reset live_stream_url
+      live_stream_url: DEFAULT_LIVE_STREAM_URL, // Reset to default here
     });
     setIsEditing(false);
     setEditingMatch(null);
@@ -147,7 +149,7 @@ export const MatchesManagement = () => {
       status: match.status as "scheduled" | "live" | "finished",
       home_score: match.home_score,
       away_score: match.away_score,
-      live_stream_url: match.live_stream_url || "", // Set live_stream_url for editing
+      live_stream_url: match.live_stream_url || DEFAULT_LIVE_STREAM_URL, // Fallback to default if null
     });
     setIsEditing(true);
   };
