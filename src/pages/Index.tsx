@@ -77,7 +77,7 @@ const Index = () => {
       <div className="container mx-auto px-4 py-20">
         <div className="text-center mb-12 animate-fade-in">
           <h2 className="text-3xl md:text-4xl font-heading gradient-text mb-4">
-            Competing Teams
+            Teams
           </h2>
           <p className="text-muted-foreground">
             Meet the six teams battling for tournament glory
