@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Database } from "@/integrations/supabase/types"; // Import Database type
+import { toast } from "sonner"; // Import toast for user feedback
 
 interface AuthContextType {
   user: User | null;
@@ -41,29 +42,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [lastName, setLastName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Define the expected type for the data returned by the profile select query
   type ProfileSelectData = {
     first_name: string | null;
     last_name: string | null;
-  } | null; // It can be null if .single() finds no record
+  } | null;
 
   const fetchUserProfile = async (userId: string) => {
     const { data: profileData, error: profileError } = await supabase
       .from('profiles' as keyof Database['public']['Tables'])
       .select('first_name, last_name')
       .eq('id', userId)
-      .single<ProfileSelectData>(); // Explicitly type the single() return data
+      .single<ProfileSelectData>();
 
     if (profileError) {
       console.error("Error fetching profile:", profileError);
       setFirstName(null);
       setLastName(null);
     } else if (profileData) {
-      // profileData is now correctly inferred as { first_name: string | null, last_name: string | null }
       setFirstName(profileData.first_name);
       setLastName(profileData.last_name);
     } else {
-      // Handle case where no profile is found (profileData is null, but no error)
       setFirstName(null);
       setLastName(null);
     }
@@ -72,11 +70,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state change event:", event, "Session:", session); // Debug log
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user role
           const { data: roleData } = await supabase
             .from('user_roles')
             .select('role, team_id')
@@ -90,11 +88,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUserRole(null);
             setTeamId(null);
           }
-
-          // Fetch user profile (first_name, last_name)
           await fetchUserProfile(session.user.id);
-
         } else {
+          // Explicitly clear all user-related state on SIGNED_OUT or no session
           setUserRole(null);
           setTeamId(null);
           setFirstName(null);
@@ -104,13 +100,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // Check for existing session on initial load
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log("Initial session check:", session); // Debug log
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Fetch user role
         const { data: roleData } = await supabase
           .from('user_roles')
           .select('role, team_id')
@@ -121,8 +116,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUserRole(roleData.role);
           setTeamId(roleData.team_id);
         }
-
-        // Fetch user profile (first_name, last_name)
         await fetchUserProfile(session.user.id);
       }
       setLoading(false);
@@ -132,14 +125,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true); // Set loading true on sign in attempt
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    if (error) setLoading(false); // If error, stop loading
     return { error };
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+    setLoading(true); // Set loading true on sign up attempt
     const redirectUrl = `${window.location.origin}/`;
     const { error } = await supabase.auth.signUp({
       email,
@@ -152,22 +148,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       },
     });
+    if (error) setLoading(false); // If error, stop loading
     return { error };
   };
 
   const signOut = async () => {
+    console.log("Attempting to sign out..."); // Debug log
+    setLoading(true); // Indicate loading during sign out
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Error signing out:", error);
+      toast.error("Failed to sign out: " + error.message); // Provide user feedback
+    } else {
+      toast.success("Successfully logged out!"); // Provide user feedback
     }
     // Explicitly clear local state after Supabase sign out
+    // This will also trigger the onAuthStateChange listener with SIGNED_OUT event
     setUser(null);
     setSession(null);
     setUserRole(null);
     setTeamId(null);
     setFirstName(null);
     setLastName(null);
-    setLoading(false); // Set loading to false after sign out
+    setLoading(false); // Set loading to false after sign out attempt
+    console.log("Sign out process completed. User state cleared."); // Debug log
   };
 
   return (
