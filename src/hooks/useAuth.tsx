@@ -160,7 +160,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (error) {
       console.error("Error signing out:", error);
     }
-    // Removed localStorage.clear() to prevent interference with Supabase session management.
+    // Explicitly clear local state after Supabase sign out
+    setUser(null);
+    setSession(null);
+    setUserRole(null);
+    setTeamId(null);
+    setFirstName(null);
+    setLastName(null);
+    setLoading(false); // Set loading to false after sign out
   };
 
   return (

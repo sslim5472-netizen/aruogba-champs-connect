@@ -10,12 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Pencil, Trash2, X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { TablesInsert, TablesUpdate } from "@/integrations/supabase/types"; // Import Supabase types
 
 const highlightSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(200, "Title too long"),
-  description: z.string().trim().max(1000, "Description too long"),
-  video_url: z.string().url("Must be a valid video URL"),
-  thumbnail_url: z.string().url("Must be a valid thumbnail URL"),
+  description: z.string().trim().max(1000, "Description too long").optional(),
+  // Ensure video_url is always a string, converting empty string to empty string (not null)
+  video_url: z.string().url("Must be a valid video URL").or(z.literal("")).transform(e => e === "" ? "" : e),
+  // Ensure thumbnail_url is always a string, converting empty string to empty string (not null)
+  thumbnail_url: z.string().url("Must be a valid thumbnail URL").or(z.literal("")).transform(e => e === "" ? "" : e),
   match_id: z.string().optional(),
   team_id: z.string().optional(),
 });
@@ -109,12 +112,16 @@ export const HighlightsManagement = () => {
   };
 
   const createMutation = useMutation({
-    mutationFn: async (newHighlight: typeof formData) => {
-      const { error } = await supabase.from("highlights").insert([{
-        ...newHighlight,
-        match_id: newHighlight.match_id && newHighlight.match_id !== 'none' ? newHighlight.match_id : null,
-        team_id: newHighlight.team_id && newHighlight.team_id !== 'none' ? newHighlight.team_id : null,
-      }]);
+    mutationFn: async (newHighlightData: z.infer<typeof highlightSchema>) => {
+      const highlightToInsert: TablesInsert<'highlights'> = {
+        title: newHighlightData.title,
+        video_url: newHighlightData.video_url,
+        description: newHighlightData.description || null,
+        thumbnail_url: newHighlightData.thumbnail_url || null,
+        match_id: newHighlightData.match_id && newHighlightData.match_id !== 'none' ? newHighlightData.match_id : null,
+        team_id: newHighlightData.team_id && newHighlightData.team_id !== 'none' ? newHighlightData.team_id : null,
+      };
+      const { error } = await supabase.from("highlights").insert([highlightToInsert]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -126,12 +133,16 @@ export const HighlightsManagement = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { error } = await supabase.from("highlights").update({
-        ...data,
+    mutationFn: async ({ id, data }: { id: string; data: z.infer<typeof highlightSchema> }) => {
+      const highlightToUpdate: TablesUpdate<'highlights'> = {
+        title: data.title,
+        video_url: data.video_url,
+        description: data.description || null,
+        thumbnail_url: data.thumbnail_url || null,
         match_id: data.match_id && data.match_id !== 'none' ? data.match_id : null,
         team_id: data.team_id && data.team_id !== 'none' ? data.team_id : null,
-      }).eq("id", id);
+      };
+      const { error } = await supabase.from("highlights").update(highlightToUpdate).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -172,8 +183,8 @@ export const HighlightsManagement = () => {
     setFormData({
       title: highlight.title,
       description: highlight.description || "",
-      video_url: highlight.video_url,
-      thumbnail_url: highlight.thumbnail_url || "",
+      video_url: highlight.video_url || "", // Ensure it's an empty string, not null
+      thumbnail_url: highlight.thumbnail_url || "", // Ensure it's an empty string, not null
       match_id: highlight.match_id || "none",
       team_id: highlight.team_id || "none",
     });
@@ -184,12 +195,13 @@ export const HighlightsManagement = () => {
     e.preventDefault();
     
     try {
-      highlightSchema.parse(formData);
+      // Parse and transform formData before mutation
+      const parsedData = highlightSchema.parse(formData);
       
       if (editingHighlight) {
-        updateMutation.mutate({ id: editingHighlight.id, data: formData });
+        updateMutation.mutate({ id: editingHighlight.id, data: parsedData });
       } else {
-        createMutation.mutate(formData);
+        createMutation.mutate(parsedData);
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -321,7 +333,7 @@ export const HighlightsManagement = () => {
             </div>
 
             <div className="flex gap-2">
-              <Button type="submit" disabled={uploading || !formData.video_url}>
+              <Button type="submit" disabled={uploading || (!formData.video_url && !editingHighlight)}>
                 {editingHighlight ? "Update Highlight" : "Create Highlight"}
               </Button>
               <Button type="button" variant="outline" onClick={resetForm}>
