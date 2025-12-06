@@ -46,8 +46,6 @@ const Admin = () => {
     );
   }
 
-  // No need for `if (!user) { return null; }` here, as the useEffect handles redirection.
-
   const handleSignOut = async () => {
     setIsSigningOut(true); // Indicate that sign out is in progress
     await signOut(); // This will eventually set user to null, triggering the useEffect
@@ -112,7 +110,7 @@ const Admin = () => {
                 <div>
                   <h1 className="text-3xl font-heading gradient-text">Admin Dashboard</h1>
                   <p className="text-muted-foreground capitalize">
-                    Welcome, {firstName && lastName ? `${firstName} ${lastName}` : user.email} (Role: {userRole || 'viewer'})
+                    Welcome, {user ? (firstName && lastName ? `${firstName} ${lastName}` : user.email) : 'Guest'} (Role: {userRole || 'viewer'})
                   </p>
                 </div>
               </div>
