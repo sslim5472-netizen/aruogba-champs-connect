@@ -7,28 +7,27 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, X, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { TablesInsert, TablesUpdate } from "@/integrations/supabase/types"; // Import Supabase types
+import { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
+// Simplified schema: empty string inputs will be converted to null for the database
 const highlightSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(200, "Title too long"),
-  description: z.string().trim().max(1000, "Description too long").optional(),
-  // Ensure video_url is always a string, converting empty string to empty string (not null)
-  video_url: z.string().url("Must be a valid video URL").or(z.literal("")).transform(e => e === "" ? "" : e),
-  // Ensure thumbnail_url is always a string, converting empty string to empty string (not null)
-  thumbnail_url: z.string().url("Must be a valid thumbnail URL").or(z.literal("")).transform(e => e === "" ? "" : e),
-  match_id: z.string().optional(),
-  team_id: z.string().optional(),
+  description: z.string().trim().max(1000, "Description too long").optional().nullable(),
+  video_url: z.string().url("Must be a valid video URL").optional().nullable(),
+  thumbnail_url: z.string().url("Must be a valid thumbnail URL").optional().nullable(),
+  match_id: z.string().optional().nullable(),
+  team_id: z.string().optional().nullable(),
 });
 
 interface Highlight {
   id: string;
   title: string;
-  description: string;
-  video_url: string;
-  thumbnail_url: string;
+  description: string | null;
+  video_url: string | null;
+  thumbnail_url: string | null;
   match_id: string | null;
   team_id: string | null;
 }
@@ -43,8 +42,8 @@ export const HighlightsManagement = () => {
     description: "",
     video_url: "",
     thumbnail_url: "",
-    match_id: "none",
-    team_id: "none",
+    match_id: "",
+    team_id: "",
   });
 
   const { data: matches } = useQuery({
@@ -113,13 +112,14 @@ export const HighlightsManagement = () => {
 
   const createMutation = useMutation({
     mutationFn: async (newHighlightData: z.infer<typeof highlightSchema>) => {
+      // Prepare data for insertion, converting empty strings to null
       const highlightToInsert: TablesInsert<'highlights'> = {
         title: newHighlightData.title,
-        video_url: newHighlightData.video_url,
+        video_url: newHighlightData.video_url || null,
         description: newHighlightData.description || null,
         thumbnail_url: newHighlightData.thumbnail_url || null,
-        match_id: newHighlightData.match_id && newHighlightData.match_id !== 'none' ? newHighlightData.match_id : null,
-        team_id: newHighlightData.team_id && newHighlightData.team_id !== 'none' ? newHighlightData.team_id : null,
+        match_id: newHighlightData.match_id || null,
+        team_id: newHighlightData.team_id || null,
       };
       const { error } = await supabase.from("highlights").insert([highlightToInsert]);
       if (error) throw error;
@@ -129,18 +129,22 @@ export const HighlightsManagement = () => {
       resetForm();
       toast.success("Highlight created successfully");
     },
-    onError: () => toast.error("Failed to create highlight"),
+    onError: (error) => {
+       console.error("Create highlight error:", error);
+       toast.error("Failed to create highlight");
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: z.infer<typeof highlightSchema> }) => {
+      // Prepare data for update, converting empty strings to null
       const highlightToUpdate: TablesUpdate<'highlights'> = {
         title: data.title,
-        video_url: data.video_url,
+        video_url: data.video_url || null,
         description: data.description || null,
         thumbnail_url: data.thumbnail_url || null,
-        match_id: data.match_id && data.match_id !== 'none' ? data.match_id : null,
-        team_id: data.team_id && data.team_id !== 'none' ? data.team_id : null,
+        match_id: data.match_id || null,
+        team_id: data.team_id || null,
       };
       const { error } = await supabase.from("highlights").update(highlightToUpdate).eq("id", id);
       if (error) throw error;
@@ -150,7 +154,10 @@ export const HighlightsManagement = () => {
       resetForm();
       toast.success("Highlight updated successfully");
     },
-    onError: () => toast.error("Failed to update highlight"),
+    onError: (error) => {
+       console.error("Update highlight error:", error);
+       toast.error("Failed to update highlight");
+    },
   });
 
   const deleteMutation = useMutation({
@@ -162,7 +169,10 @@ export const HighlightsManagement = () => {
       queryClient.invalidateQueries({ queryKey: ["highlights-admin"] });
       toast.success("Highlight deleted successfully");
     },
-    onError: () => toast.error("Failed to delete highlight"),
+    onError: (error) => {
+       console.error("Delete highlight error:", error);
+       toast.error("Failed to delete highlight");
+    },
   });
 
   const resetForm = () => {
@@ -171,8 +181,8 @@ export const HighlightsManagement = () => {
       description: "",
       video_url: "",
       thumbnail_url: "",
-      match_id: "none",
-      team_id: "none",
+      match_id: "",
+      team_id: "",
     });
     setIsEditing(false);
     setEditingHighlight(null);
@@ -183,10 +193,10 @@ export const HighlightsManagement = () => {
     setFormData({
       title: highlight.title,
       description: highlight.description || "",
-      video_url: highlight.video_url || "", // Ensure it's an empty string, not null
-      thumbnail_url: highlight.thumbnail_url || "", // Ensure it's an empty string, not null
-      match_id: highlight.match_id || "none",
-      team_id: highlight.team_id || "none",
+      video_url: highlight.video_url || "",
+      thumbnail_url: highlight.thumbnail_url || "",
+      match_id: highlight.match_id || "",
+      team_id: highlight.team_id || "",
     });
     setIsEditing(true);
   };
@@ -196,7 +206,17 @@ export const HighlightsManagement = () => {
     
     try {
       // Parse and transform formData before mutation
-      const parsedData = highlightSchema.parse(formData);
+      // Convert empty strings for optional fields to null
+      const processedData = {
+        ...formData,
+        description: formData.description.trim() === "" ? null : formData.description,
+        video_url: formData.video_url.trim() === "" ? null : formData.video_url,
+        thumbnail_url: formData.thumbnail_url.trim() === "" ? null : formData.thumbnail_url,
+        match_id: formData.match_id.trim() === "" ? null : formData.match_id,
+        team_id: formData.team_id.trim() === "" ? null : formData.team_id,
+      };
+      
+      const parsedData = highlightSchema.parse(processedData);
       
       if (editingHighlight) {
         updateMutation.mutate({ id: editingHighlight.id, data: parsedData });
@@ -206,6 +226,9 @@ export const HighlightsManagement = () => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
+      } else {
+        console.error("Submission error:", error);
+        toast.error("An unexpected error occurred");
       }
     }
   };
@@ -248,7 +271,7 @@ export const HighlightsManagement = () => {
               </div>
 
               <div className="md:col-span-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Description (Optional)</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
@@ -258,9 +281,16 @@ export const HighlightsManagement = () => {
               </div>
 
               <div>
-                <Label htmlFor="video">Video Upload</Label>
+                <Label htmlFor="video">Video URL (Optional)</Label>
                 <Input
                   id="video"
+                  type="url"
+                  value={formData.video_url}
+                  onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                  placeholder="https://example.com/video.mp4"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Or upload a video file below.</p>
+                 <Input
                   type="file"
                   accept="video/*"
                   onChange={(e) => {
@@ -268,16 +298,24 @@ export const HighlightsManagement = () => {
                     if (file) handleFileUpload(file, 'video');
                   }}
                   disabled={uploading}
+                  className="mt-1"
                 />
                 {formData.video_url && (
-                  <p className="text-xs text-muted-foreground mt-1">Video uploaded ✓</p>
+                  <p className="text-xs text-muted-foreground mt-1">Video URL set ✓</p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="thumbnail">Thumbnail Upload</Label>
+                <Label htmlFor="thumbnail">Thumbnail URL (Optional)</Label>
                 <Input
                   id="thumbnail"
+                  type="url"
+                  value={formData.thumbnail_url}
+                  onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+                  placeholder="https://example.com/thumbnail.jpg"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Or upload an image file below.</p>
+                 <Input
                   type="file"
                   accept="image/*"
                   onChange={(e) => {
@@ -285,9 +323,10 @@ export const HighlightsManagement = () => {
                     if (file) handleFileUpload(file, 'thumbnail');
                   }}
                   disabled={uploading}
+                  className="mt-1"
                 />
                 {formData.thumbnail_url && (
-                  <p className="text-xs text-muted-foreground mt-1">Thumbnail uploaded ✓</p>
+                  <p className="text-xs text-muted-foreground mt-1">Thumbnail URL set ✓</p>
                 )}
               </div>
 
@@ -301,7 +340,7 @@ export const HighlightsManagement = () => {
                     <SelectValue placeholder="Select match" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="">None</SelectItem>
                     {matches?.map((match: any) => (
                       <SelectItem key={match.id} value={match.id}>
                         {match.home_team.name} vs {match.away_team.name}
@@ -321,7 +360,7 @@ export const HighlightsManagement = () => {
                     <SelectValue placeholder="Select team" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="">None</SelectItem>
                     {teams?.map((team) => (
                       <SelectItem key={team.id} value={team.id}>
                         {team.name}
@@ -333,7 +372,7 @@ export const HighlightsManagement = () => {
             </div>
 
             <div className="flex gap-2">
-              <Button type="submit" disabled={uploading || (!formData.video_url && !editingHighlight)}>
+              <Button type="submit" disabled={uploading}>
                 {editingHighlight ? "Update Highlight" : "Create Highlight"}
               </Button>
               <Button type="button" variant="outline" onClick={resetForm}>
@@ -347,12 +386,16 @@ export const HighlightsManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {highlights?.map((highlight) => (
           <Card key={highlight.id} className="glass-card overflow-hidden">
-            {highlight.thumbnail_url && (
+            {highlight.thumbnail_url ? (
               <img
                 src={highlight.thumbnail_url}
                 alt={highlight.title}
                 className="w-full h-48 object-cover"
               />
+            ) : (
+               <div className="w-full h-48 bg-muted flex items-center justify-center">
+                <span className="text-muted-foreground">No Thumbnail</span>
+              </div>
             )}
             <div className="p-4">
               <h3 className="font-semibold mb-2">{highlight.title}</h3>

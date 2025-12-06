@@ -24,7 +24,7 @@ const Countdown = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [targetDate]);
+  }, [targetDate]); // Added targetDate to dependency array
 
   return (
     <div className="glass-card p-8 rounded-2xl animate-fade-in">

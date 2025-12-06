@@ -11,7 +11,6 @@ const Admin = () => {
   const { user, userRole, firstName, lastName, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false); // New state for local sign out
 
   useEffect(() => {
     setMounted(true);
@@ -20,22 +19,16 @@ const Admin = () => {
   useEffect(() => {
     if (mounted && !loading) {
       if (!user) {
-        // If user is null and we were actively signing out from this page, go to home.
-        // Otherwise, if user is null (e.g., not logged in, or logged out from Navigation), go to admin login.
-        if (isSigningOut) {
-          navigate("/");
-          setIsSigningOut(false); // Reset the flag after navigation
-        } else {
-          navigate("/admin/login");
-        }
+        // Redirect to login if not authenticated
+        navigate("/admin/login", { replace: true });
       } else if (userRole !== 'admin') {
         toast.error("Access denied. Admin privileges required.");
-        navigate("/");
+        navigate("/", { replace: true });
       }
     }
-  }, [user, userRole, loading, navigate, mounted, isSigningOut]); // Added isSigningOut to dependencies
+  }, [user, userRole, loading, navigate, mounted]);
 
-  if (loading || !mounted || isSigningOut) { // Show loading state if signing out
+  if (loading || !mounted) {
     return (
       <div className="min-h-screen">
         <Navigation />
@@ -46,10 +39,15 @@ const Admin = () => {
     );
   }
 
+  // If user is null or not admin, the effect above handles navigation
+  // This explicit check acts as a safeguard
+  if (!user || userRole !== 'admin') {
+    return null; // Or a minimal UI state while navigating
+  }
+
   const handleSignOut = async () => {
-    setIsSigningOut(true); // Indicate that sign out is in progress
-    await signOut(); // This will eventually set user to null, triggering the useEffect
-    // The useEffect will handle the navigation to "/" because isSigningOut is true
+    await signOut();
+    // signOut handles navigation and reload, so no further action needed here
   };
 
   const adminCards = [
@@ -91,7 +89,7 @@ const Admin = () => {
   ];
 
   const accessibleCards = adminCards.filter(card => 
-    card.roles.includes(userRole as string)
+    card.roles.includes(userRole)
   );
 
   return (
@@ -119,7 +117,6 @@ const Admin = () => {
                 variant="outline" 
                 onClick={handleSignOut}
                 className="border-destructive/50 hover:bg-destructive/10"
-                disabled={isSigningOut} // Disable button while signing out
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out

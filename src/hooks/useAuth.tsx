@@ -1,9 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { Database } from "@/integrations/supabase/types"; // Import Database type
-import { toast } from "sonner"; // Import toast for user feedback
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
@@ -42,17 +40,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [lastName, setLastName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  type ProfileSelectData = {
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
-
   const fetchUserProfile = async (userId: string) => {
+    // Use type assertion to bypass the generated type check for 'profiles'
     const { data: profileData, error: profileError } = await supabase
-      .from('profiles' as keyof Database['public']['Tables'])
+      .from('profiles' as any) // Type assertion to fix TS error
       .select('first_name, last_name')
       .eq('id', userId)
-      .single<ProfileSelectData>();
+      .single<{ first_name: string | null; last_name: string | null } | null>();
 
     if (profileError) {
       console.error("Error fetching profile:", profileError);
@@ -69,18 +63,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state change event:", event, "Session:", session); // Debug log
+      async (_event, session) => {
+        // console.log("Auth state change event:", _event, "Session:", session); // Debug log
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          const { data: roleData } = await supabase
+          const { data: roleData, error: roleError } = await supabase
             .from('user_roles')
             .select('role, team_id')
             .eq('user_id', session.user.id)
-            .single();
+            .single<{ role: string; team_id: string | null } | null>();
           
+          if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
+             console.error("Error fetching user role:", roleError);
+          }
+
           if (roleData) {
             setUserRole(roleData.role);
             setTeamId(roleData.team_id);
@@ -101,17 +99,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log("Initial session check:", session); // Debug log
+      // console.log("Initial session check:", session); // Debug log
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const { data: roleData } = await supabase
+        const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('role, team_id')
           .eq('user_id', session.user.id)
-          .single();
+          .single<{ role: string; team_id: string | null } | null>();
         
+         if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
+             console.error("Error fetching user role on init:", roleError);
+          }
+
         if (roleData) {
           setUserRole(roleData.role);
           setTeamId(roleData.team_id);
@@ -125,17 +127,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    setLoading(true); // Set loading true on sign in attempt
+    setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    if (error) setLoading(false); // If error, stop loading
+    if (error) setLoading(false);
     return { error };
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
-    setLoading(true); // Set loading true on sign up attempt
+    setLoading(true);
     const redirectUrl = `${window.location.origin}/`;
     const { error } = await supabase.auth.signUp({
       email,
@@ -148,13 +150,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       },
     });
-    if (error) setLoading(false); // If error, stop loading
+    if (error) setLoading(false);
     return { error };
   };
 
   const signOut = async () => {
-    console.log("Attempting to sign out...");
-    setLoading(true); // Indicate loading during sign out
+    console.log("Initiating sign out...");
+    setLoading(true);
     
     try {
       const { error } = await supabase.auth.signOut();
@@ -165,16 +167,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         console.log("Successfully signed out from Supabase.");
         toast.success("Successfully logged out!");
-        
         // Perform a full page reload to ensure all state is reset cleanly
-        window.location.reload();
+        window.location.assign('/');
       }
     } catch (err: any) {
       console.error("Unexpected error during sign out:", err);
       toast.error("An unexpected error occurred during logout.");
     } finally {
-      // Even if reload is called, setting state here ensures consistency
-      // in case the reload is interrupted or behaves unexpectedly in some environments
+      // Reset state optimistically before reload
       setUser(null);
       setSession(null);
       setUserRole(null);
