@@ -19,6 +19,7 @@ const matchSchema = z.object({
   status: z.enum(["scheduled", "live", "finished"]),
   home_score: z.coerce.number().int().min(0, "Score cannot be negative"),
   away_score: z.coerce.number().int().min(0, "Score cannot be negative"),
+  live_stream_url: z.string().url("Must be a valid URL").optional().or(z.literal("")), // Added live_stream_url
 }).refine((data) => data.home_team_id !== data.away_team_id, {
   message: "Home and away teams must be different",
   path: ["away_team_id"],
@@ -35,6 +36,7 @@ interface Match {
   away_score: number;
   home_team: { name: string };
   away_team: { name: string };
+  live_stream_url: string | null; // Added live_stream_url
 }
 
 export const MatchesManagement = () => {
@@ -49,6 +51,7 @@ export const MatchesManagement = () => {
     status: "scheduled" | "live" | "finished";
     home_score: number;
     away_score: number;
+    live_stream_url: string; // Added live_stream_url
   }>({
     home_team_id: "",
     away_team_id: "",
@@ -57,6 +60,7 @@ export const MatchesManagement = () => {
     status: "scheduled",
     home_score: 0,
     away_score: 0,
+    live_stream_url: "", // Added live_stream_url
   });
 
   const { data: teams } = useQuery({
@@ -127,6 +131,7 @@ export const MatchesManagement = () => {
       status: "scheduled",
       home_score: 0,
       away_score: 0,
+      live_stream_url: "", // Reset live_stream_url
     });
     setIsEditing(false);
     setEditingMatch(null);
@@ -142,6 +147,7 @@ export const MatchesManagement = () => {
       status: match.status as "scheduled" | "live" | "finished",
       home_score: match.home_score,
       away_score: match.away_score,
+      live_stream_url: match.live_stream_url || "", // Set live_stream_url for editing
     });
     setIsEditing(true);
   };
@@ -291,6 +297,17 @@ export const MatchesManagement = () => {
                   />
                 </div>
               </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="live_stream_url">Live Stream URL (Optional)</Label>
+                <Input
+                  id="live_stream_url"
+                  type="url"
+                  value={formData.live_stream_url}
+                  onChange={(e) => setFormData({ ...formData, live_stream_url: e.target.value })}
+                  placeholder="https://youtube.com/watch?v=..."
+                />
+              </div>
             </div>
 
             <div className="flex gap-2">
@@ -327,6 +344,11 @@ export const MatchesManagement = () => {
                   }`}>
                     {match.status.toUpperCase()}
                   </span>
+                  {match.live_stream_url && (
+                    <span className="ml-2 px-2 py-1 rounded text-xs bg-primary/20 text-primary">
+                      Stream Available
+                    </span>
+                  )}
                 </div>
               </div>
 

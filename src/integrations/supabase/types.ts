@@ -184,6 +184,7 @@ export type Database = {
           status: Database["public"]["Enums"]["match_status"] | null
           updated_at: string
           venue: string | null
+          live_stream_url: string | null // Added live_stream_url
         }
         Insert: {
           assistant_1?: string | null
@@ -200,6 +201,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"] | null
           updated_at?: string
           venue?: string | null
+          live_stream_url?: string | null // Added live_stream_url
         }
         Update: {
           assistant_1?: string | null
@@ -216,6 +218,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"] | null
           updated_at?: string
           venue?: string | null
+          live_stream_url?: string | null // Added live_stream_url
         }
         Relationships: [
           {

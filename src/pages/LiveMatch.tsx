@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 const LiveMatch = () => {
   const navigate = useNavigate();
   const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
-  const [liveStreamUrl, setLiveStreamUrl] = useState<string | null>(null); // State for live stream URL
+  // Removed local liveStreamUrl state, now it comes from liveMatch.live_stream_url
 
   const { data: liveMatch, refetch } = useQuery({
     queryKey: ['live-match', liveMatchId],
@@ -52,11 +52,7 @@ const LiveMatch = () => {
   useEffect(() => {
     if (liveMatch) {
       setLiveMatchId(liveMatch.id);
-      // Placeholder for live stream URL. In a real app, this would come from the match data.
-      // For example: setLiveStreamUrl(liveMatch.live_stream_url);
-      setLiveStreamUrl("https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1"); // Example YouTube embed
-    } else {
-      setLiveStreamUrl(null);
+      // Now setting liveStreamUrl directly from liveMatch data
     }
   }, [liveMatch]);
 
@@ -123,13 +119,22 @@ const LiveMatch = () => {
     }
   };
 
+  // Helper to get YouTube embed URL from various YouTube link formats
+  const getYouTubeEmbedUrl = (url: string | null) => {
+    if (!url) return null;
+    const videoId = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&\s]+)/)?.[1];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  };
+
+  const embedUrl = getYouTubeEmbedUrl(liveMatch.live_stream_url);
+
   return (
     <div className="min-h-screen">
       <Navigation />
       
       <div className="container mx-auto px-4 py-12">
         {/* Live Stream Player */}
-        {liveStreamUrl && (
+        {embedUrl && (
           <div className="glass-card p-4 rounded-xl mb-8 animate-fade-in">
             <div className="flex items-center gap-2 mb-4">
               <Video className="w-5 h-5 text-primary" />
@@ -137,7 +142,7 @@ const LiveMatch = () => {
             </div>
             <div className="relative aspect-video w-full rounded-lg overflow-hidden">
               <iframe
-                src={liveStreamUrl}
+                src={embedUrl}
                 title="Live Match Stream"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
