@@ -41,14 +41,28 @@ interface Match {
   live_stream_url: string | null;
 }
 
-// Helper function to get current local datetime in YYYY-MM-DDTHH:mm format
-const getLocalDatetimeString = (date: Date) => {
+// Helper function to format a Date object into YYYY-MM-DDTHH:mm for datetime-local input
+const formatToDatetimeLocal = (date: Date) => {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const day = date.getDate().toString().padStart(2, '0');
   const hours = date.getHours().toString().padStart(2, '0');
   const minutes = date.getMinutes().toString().padStart(2, '0');
   return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+// Helper function to convert a local datetime string (YYYY-MM-DDTHH:mm) to an ISO string with local timezone offset
+const toLocalISOStringWithOffset = (localDateTimeString: string) => {
+  const date = new Date(localDateTimeString); // Parses as local time
+  const offset = date.getTimezoneOffset(); // Offset in minutes from UTC
+  const sign = offset > 0 ? '-' : '+';
+  const absOffset = Math.abs(offset);
+  const offsetHours = Math.floor(absOffset / 60).toString().padStart(2, '0');
+  const offsetMinutes = (absOffset % 60).toString().padStart(2, '0');
+
+  // Format to YYYY-MM-DDTHH:mm:ss and append offset
+  const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss");
+  return `${formattedDate}${sign}${offsetHours}:${offsetMinutes}`;
 };
 
 export const MatchesManagement = () => {
@@ -67,7 +81,7 @@ export const MatchesManagement = () => {
   }>({
     home_team_id: "",
     away_team_id: "",
-    match_date: getLocalDatetimeString(new Date()), // Default to current local datetime
+    match_date: formatToDatetimeLocal(new Date()), // Default to current local datetime
     venue: "Main Pitch",
     status: "scheduled",
     home_score: 0,
@@ -98,7 +112,10 @@ export const MatchesManagement = () => {
 
   const createMutation = useMutation({
     mutationFn: async (newMatch: typeof formData) => {
-      const { error } = await supabase.from("matches").insert([newMatch]);
+      const { error } = await supabase.from("matches").insert([{
+        ...newMatch,
+        match_date: toLocalISOStringWithOffset(newMatch.match_date), // Convert to ISO with local offset
+      }]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -111,7 +128,10 @@ export const MatchesManagement = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { error } = await supabase.from("matches").update(data).eq("id", id);
+      const { error } = await supabase.from("matches").update({
+        ...data,
+        match_date: toLocalISOStringWithOffset(data.match_date), // Convert to ISO with local offset
+      }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -138,7 +158,7 @@ export const MatchesManagement = () => {
     setFormData({
       home_team_id: "",
       away_team_id: "",
-      match_date: getLocalDatetimeString(new Date()), // Reset to current local datetime
+      match_date: formatToDatetimeLocal(new Date()), // Reset to current local datetime
       venue: "Main Pitch",
       status: "scheduled",
       home_score: 0,
@@ -154,7 +174,7 @@ export const MatchesManagement = () => {
     setFormData({
       home_team_id: match.home_team_id,
       away_team_id: match.away_team_id,
-      match_date: format(new Date(match.match_date), "yyyy-MM-dd'T'HH:mm"),
+      match_date: formatToDatetimeLocal(new Date(match.match_date)), // Format retrieved date to local datetime string
       venue: match.venue,
       status: match.status as "scheduled" | "live" | "finished",
       home_score: match.home_score,
