@@ -4,14 +4,7 @@ import { Shield, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-
-// Import logos for fallback display
-import airwayLogo from "@/assets/airway-fc.jpg";
-import knightsLogo from "@/assets/knights-fc.jpg";
-import starsLogo from "@/assets/stars-fc.jpg";
-import spartaLogo from "@/assets/sparta-fc.jpg";
-import kingsLogo from "@/assets/kings-fc.jpg";
-import enjoymentLogo from "@/assets/enjoyment-fc.jpg";
+import { getTeamLogo } from "@/lib/teamUtils"; // Import the new utility
 
 interface TeamStat {
   id: string;
@@ -29,22 +22,6 @@ const Standings = () => {
 
   const getTeamSlug = (teamName: string) => {
     return teamName.toLowerCase().replace(/\s+/g, '-');
-  };
-
-  const getTeamLogo = (teamName: string, logoUrl: string) => {
-    const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '-');
-    const logoMap: Record<string, string> = {
-        'airway-fc': airwayLogo,
-        'knights-fc': knightsLogo,
-        'stars-fc': starsLogo,
-        'sparta-fc': spartaLogo,
-        'kings-fc': kingsLogo,
-        'enjoyment-fc': enjoymentLogo,
-    };
-    const normalized = teamName ? normalize(teamName) : '';
-    const fallbackLogo = normalized ? logoMap[normalized] : undefined;
-    const isValidUrl = (s?: string | null) => Boolean(s && /^https?:\/\//.test(s));
-    return isValidUrl(logoUrl) ? logoUrl : (fallbackLogo || '/placeholder.svg');
   };
 
   const { data: teamsData, isLoading } = useQuery({

@@ -8,14 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-
-// Import team logos
-import airwayLogo from "@/assets/airway-fc.jpg";
-import knightsLogo from "@/assets/knights-fc.jpg";
-import starsLogo from "@/assets/stars-fc.jpg";
-import spartaLogo from "@/assets/sparta-fc.jpg";
-import kingsLogo from "@/assets/kings-fc.jpg";
-import enjoymentLogo from "@/assets/enjoyment-fc.jpg";
+import { getTeamLogo } from "@/lib/teamUtils"; // Import the new utility
 
 const teamSchema = z.object({
   name: z.string().trim().min(1, "Team name is required").max(100, "Team name must be less than 100 characters"),
@@ -42,28 +35,6 @@ export const TeamsManagement = () => {
     color: "#007BFF",
     logo_url: "",
   });
-
-  // Map team names to imported logos
-  const getTeamLogo = (teamName: string, logoUrl: string) => {
-    const logoMap: Record<string, string> = {
-      'airway fc': airwayLogo,
-      'knights fc': knightsLogo,
-      'stars fc': starsLogo,
-      'sparta fc': spartaLogo,
-      'kings fc': kingsLogo,
-      'enjoyment fc': enjoymentLogo,
-    };
-    
-    const normalizedName = teamName.toLowerCase();
-    
-    // If logo_url is a valid HTTP URL, use it
-    if (logoUrl && logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    // Otherwise use the local imported logo
-    return logoMap[normalizedName] || 'https://via.placeholder.com/80?text=Logo';
-  };
 
   const { data: teams, isLoading } = useQuery({
     queryKey: ["teams-admin"],

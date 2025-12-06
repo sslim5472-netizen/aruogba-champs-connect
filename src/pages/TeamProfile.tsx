@@ -3,12 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Target, Shield, AlertCircle } from "lucide-react";
-import airwayLogo from "@/assets/airway-fc.jpg";
-import knightsLogo from "@/assets/knights-fc.jpg";
-import starsLogo from "@/assets/stars-fc.jpg";
-import spartaLogo from "@/assets/sparta-fc.jpg";
-import kingsLogo from "@/assets/kings-fc.jpg";
-import enjoymentLogo from "@/assets/enjoyment-fc.jpg";
+import { getTeamLogo } from "@/lib/teamUtils"; // Import the new utility
 
 const TeamProfile = () => {
   const { teamSlug } = useParams();
@@ -79,19 +74,8 @@ const TeamProfile = () => {
     motmAwards: players?.reduce((sum, p) => sum + (p.motm_awards || 0), 0) || 0,
   };
 
-  const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '-');
-  const logoMap: Record<string, string> = {
-    'airway-fc': airwayLogo,
-    'knights-fc': knightsLogo,
-    'stars-fc': starsLogo,
-    'sparta-fc': spartaLogo,
-    'kings-fc': kingsLogo,
-    'enjoyment-fc': enjoymentLogo,
-  };
-  const normalized = team?.name ? normalize(team.name) : '';
-  const fallbackLogo = normalized ? logoMap[normalized] : undefined;
-  const isValidUrl = (s?: string | null) => Boolean(s && /^https?:\/\//.test(s));
-  const logoSrc = isValidUrl(team?.logo_url) ? (team!.logo_url as string) : (fallbackLogo || '/placeholder.svg');
+  // Use the centralized getTeamLogo utility
+  const logoSrc = getTeamLogo(team.name, team.logo_url);
 
   return (
     <div className="min-h-screen">
@@ -108,7 +92,7 @@ const TeamProfile = () => {
                 border: `3px solid ${team.color}`
               }}
             >
-              <img src={logoSrc} alt={team.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = fallbackLogo || '/placeholder.svg'; }} />
+              <img src={logoSrc} alt={team.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }} />
             </div>
             
             <div className="flex-1 text-center md:text-left">
