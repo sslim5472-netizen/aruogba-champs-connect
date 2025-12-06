@@ -116,7 +116,7 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t border-border/50 py-6 text-center text-sm text-muted-foreground">
-        Built and designed by BUILDGRID
+        © 2025 Built and designed by BuildGrid Limited.
       </footer>
     </div>
   );
