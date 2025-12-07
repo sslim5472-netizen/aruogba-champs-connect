@@ -1,373 +1,292 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
-import { Trophy, Target, Shield, AlertTriangle, AlertOctagon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { getTeamLogo } from "@/lib/teamUtils"; // Import the new utility
-
-interface TeamStat {
-  id: string;
-  name: string;
-  logo_url: string;
-  wins: number;
-  draws: number;
-  losses: number;
-  goals_for: number;
-  goals_against: number;
-}
-
-interface PlayerStat {
-  name: string;
-  goals: number;
-  assists: number;
-  yellow_cards: number;
-  red_cards: number;
-  teams: { name: string };
-}
+import { supabase } from "@/integrations/supabase/client";
+import { Trophy, Goal, Users, Award, Shield, CalendarDays } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Stats = () => {
-  const navigate = useNavigate();
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [topScorers, setTopScorers] = useState<PlayerStat[]>([]);
-  const [topAssists, setTopAssists] = useState<PlayerStat[]>([]);
-  const [topYellowCards, setTopYellowCards] = useState<PlayerStat[]>([]);
-  const [topRedCards, setTopRedCards] = useState<PlayerStat[]>([]);
-
-  const getTeamSlug = (teamName: string) => {
-    return teamName.toLowerCase().replace(/\s+/g, '-');
-  };
-
-  // Fetch all teams for standings
-  const { data: teamsData, isLoading: teamsLoading } = useQuery({
-    queryKey: ["league-standings"],
+  // Fetch Top Scorers
+  const { data: topScorers, isLoading: isLoadingScorers, error: scorersError } = useQuery({
+    queryKey: ['topScorers'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("teams")
-        .select("id, name, logo_url, wins, draws, losses, goals_for, goals_against")
-        .order("name");
-      if (error) {
-        throw error;
-      }
-      return data as TeamStat[];
+        .from('players')
+        .select('id, name, goals_scored, team:teams(name, logo_url, color)')
+        .order('goals_scored', { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data;
     },
   });
 
-  // Calculate standings and sort
-  const standings = teamsData
-    ? teamsData
-        .map(team => ({
-            ...team,
-            played: (team.wins || 0) + (team.draws || 0) + (team.losses || 0),
-            points: (team.wins || 0) * 3 + (team.draws || 0) * 1,
-            goal_difference: (team.goals_for || 0) - (team.goals_against || 0),
-        }))
-        .sort((a, b) => {
-            if (b.points !== a.points) return b.points - a.points;
-            if (b.goal_difference !== a.goal_difference) return b.goal_difference - a.goal_difference;
-            return a.name.localeCompare(b.name); // Alphabetical tiebreaker
-        })
-    : [];
-
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      // Fetch top scorers
-      const { data: scorers } = await supabase
-        .from("players")
-        .select("name, goals, teams(name)")
-        .order("goals", { ascending: false })
+  // Fetch Top Assists
+  const { data: topAssists, isLoading: isLoadingAssists, error: assistsError } = useQuery({
+    queryKey: ['topAssists'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('players')
+        .select('id, name, assists, team:teams(name, logo_url, color)')
+        .order('assists', { ascending: false })
         .limit(5);
+      if (error) throw error;
+      return data;
+    },
+  });
 
-      // Fetch top assists
-      const { data: assists } = await supabase
-        .from("players")
-        .select("name, assists, teams(name)")
-        .order("assists", { ascending: false })
+  // Fetch Top MOTM Awards
+  const { data: topMotm, isLoading: isLoadingMotm, error: motmError } = useQuery({
+    queryKey: ['topMotm'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('players')
+        .select('id, name, motm_awards, team:teams(name, logo_url, color)')
+        .order('motm_awards', { ascending: false })
         .limit(5);
+      if (error) throw error;
+      return data;
+    },
+  });
 
-      // Fetch top yellow cards
-      const { data: yellowCards } = await supabase
-        .from("players")
-        .select("name, yellow_cards, teams(name)")
-        .order("yellow_cards", { ascending: false })
-        .limit(5);
+  // Fetch Team Standings (simplified for now, assuming points are calculated elsewhere or directly stored)
+  const { data: teamStandings, isLoading: isLoadingStandings, error: standingsError } = useQuery({
+    queryKey: ['teamStandings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id, name, logo_url, color, wins, draws, losses, points, goals_for, goals_against')
+        .order('points', { ascending: false })
+        .order('goals_for', { ascending: false }); // Tie-breaker
+      if (error) throw error;
+      return data;
+    },
+  });
 
-      // Fetch top red cards
-      const { data: redCards } = await supabase
-        .from("players")
-        .select("name, red_cards, teams(name)")
-        .order("red_cards", { ascending: false })
-        .limit(5);
+  // Fetch Upcoming Matches (Next 3)
+  const { data: upcomingMatches, isLoading: isLoadingUpcoming, error: upcomingError } = useQuery({
+    queryKey: ['upcomingMatches'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('matches')
+        .select(`
+          id,
+          match_date,
+          home_team:teams!matches_home_team_id_fkey(name, logo_url),
+          away_team:teams!matches_away_team_id_fkey(name, logo_url)
+        `)
+        .eq('status', 'scheduled')
+        .gte('match_date', new Date().toISOString())
+        .order('match_date', { ascending: true })
+        .limit(3);
+      if (error) throw error;
+      return data;
+    },
+  });
 
-      // Filter out players with 0 stats before setting state
-      if (scorers) setTopScorers(scorers.filter(p => p.goals > 0) as PlayerStat[]);
-      if (assists) setTopAssists(assists.filter(p => p.assists > 0) as PlayerStat[]);
-      if (yellowCards) setTopYellowCards(yellowCards.filter(p => p.yellow_cards > 0) as PlayerStat[]);
-      if (redCards) setTopRedCards(redCards.filter(p => p.red_cards > 0) as PlayerStat[]);
-      setLoadingStats(false);
-    };
+  const renderLoading = () => (
+    <div className="text-center text-muted-foreground py-8">Loading stats...</div>
+  );
 
-    fetchStats();
-  }, []);
-
-  const loading = teamsLoading || loadingStats;
+  const renderError = (error: any) => (
+    <div className="text-center text-destructive py-8">Error: {error?.message || "Failed to load data."}</div>
+  );
 
   return (
     <div className="min-h-screen">
       <Navigation />
-      
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12 animate-fade-in">
+          <BarChart3 className="w-16 h-16 mx-auto mb-4 text-primary" />
           <h1 className="text-4xl md:text-5xl font-heading gradient-text mb-4">
             Tournament Statistics
           </h1>
-          <p className="text-muted-foreground">
-            Player rankings and team performance
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Dive deep into the numbers: top scorers, assists, MOTM awards, and team standings.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-scale-in">
-          
-          {/* Standings Table - MOVED TO TOP */}
-          <div 
-            className="glass-card p-6 rounded-xl md:col-span-2 cursor-pointer hover:glow-effect transition-shadow"
-            onClick={() => navigate("/standings")}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-primary to-accent p-3 rounded-lg">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-2xl font-heading">League Standings</h2>
-              </div>
-              <span className="text-sm text-muted-foreground">View Full Table →</span>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-3 font-heading text-sm">#</th>
-                    <th className="text-left p-3 font-heading text-sm">Team</th>
-                    <th className="text-center p-3 font-heading text-sm">P</th>
-                    <th className="text-center p-3 font-heading text-sm">W</th>
-                    <th className="text-center p-3 font-heading text-sm">D</th>
-                    <th className="text-center p-3 font-heading text-sm">L</th>
-                    <th className="text-center p-3 font-heading text-sm">GD</th>
-                    <th className="text-center p-3 font-heading text-sm">Pts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={8} className="text-center p-6 text-muted-foreground">Loading standings...</td>
-                    </tr>
-                  ) : (
-                    standings.map((team, index) => (
-                      <tr 
-                        key={team.id} 
-                        className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent triggering parent card click
-                          navigate(`/teams/${getTeamSlug(team.name)}`);
-                        }}
-                      >
-                        <td className="p-3 text-muted-foreground">{index + 1}</td>
-                        <td className="p-3 font-heading flex items-center gap-3">
-                          <img 
-                            src={getTeamLogo(team.name, team.logo_url)} 
-                            alt={team.name}
-                            className="w-6 h-6 rounded-full object-contain border border-border"
-                          />
-                          {team.name}
-                        </td>
-                        <td className="p-3 text-center">{team.played}</td>
-                        <td className="p-3 text-center">{team.wins}</td>
-                        <td className="p-3 text-center">{team.draws}</td>
-                        <td className="p-3 text-center">{team.losses}</td>
-                        <td className="p-3 text-center">{team.goal_difference > 0 ? `+${team.goal_difference}` : team.goal_difference}</td>
-                        <td className="p-3 text-center font-heading text-primary">{team.points}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           {/* Top Scorers */}
-          <div 
-            className="glass-card p-6 rounded-xl cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => navigate("/stats/top-scorers")}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-primary to-accent p-3 rounded-lg">
-                  <Target className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-2xl font-heading">Top Scorers</h2>
-              </div>
-              <span className="text-sm text-muted-foreground">Click to view all →</span>
-            </div>
-            
-            {loading ? (
-              <div className="text-center text-muted-foreground">Loading...</div>
-            ) : topScorers.length === 0 ? (
-              <div className="text-center text-muted-foreground">No top scorers available yet.</div>
-            ) : (
-              <div className="space-y-3">
-                {topScorers.map((player, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center justify-between p-4 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                    onClick={() => player.teams?.name && navigate(`/teams/${getTeamSlug(player.teams.name)}`)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center font-heading text-gold">
-                        {index + 1}
+          <Card className="glass-card animate-slide-in-left">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xl font-heading flex items-center gap-2">
+                <Goal className="w-5 h-5 text-red-500" /> Top Scorers
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingScorers ? renderLoading() : scorersError ? renderError(scorersError) : (
+                <ol className="space-y-3">
+                  {topScorers?.map((player, index) => (
+                    <li key={player.id} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-lg w-6 text-center">{index + 1}.</span>
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={player.team?.logo_url || "/placeholder-team.png"} alt={player.team?.name || "Team"} />
+                          <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{player.name}</span>
                       </div>
-                      <div>
-                        <div className="font-heading">{player.name}</div>
-                        <div className="text-sm text-muted-foreground">{player.teams?.name}</div>
-                      </div>
-                    </div>
-                    <div className="text-2xl font-heading text-primary">{player.goals}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                      <span className="font-heading text-primary">{player.goals_scored} Goals</span>
+                    </li>
+                  ))}
+                  {(!topScorers || topScorers.length === 0) && <p className="text-muted-foreground text-center">No scorers yet.</p>}
+                </ol>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Top Assists */}
-          <div 
-            className="glass-card p-6 rounded-xl cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => navigate("/stats/top-assists")}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-accent to-primary p-3 rounded-lg">
-                  <Trophy className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-2xl font-heading">Top Assists</h2>
-              </div>
-              <span className="text-sm text-muted-foreground">Click to view all →</span>
-            </div>
-            
-            {loading ? (
-              <div className="text-center text-muted-foreground">Loading...</div>
-            ) : topAssists.length === 0 ? (
-              <div className="text-center text-muted-foreground">No top assists available yet.</div>
-            ) : (
-              <div className="space-y-3">
-                {topAssists.map((player, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center justify-between p-4 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                    onClick={() => player.teams?.name && navigate(`/teams/${getTeamSlug(player.teams.name)}`)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-silver/20 flex items-center justify-center font-heading text-silver">
-                        {index + 1}
+          <Card className="glass-card animate-slide-in-up">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xl font-heading flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-500" /> Top Assists
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingAssists ? renderLoading() : assistsError ? renderError(assistsError) : (
+                <ol className="space-y-3">
+                  {topAssists?.map((player, index) => (
+                    <li key={player.id} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-lg w-6 text-center">{index + 1}.</span>
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={player.team?.logo_url || "/placeholder-team.png"} alt={player.team?.name || "Team"} />
+                          <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{player.name}</span>
                       </div>
-                      <div>
-                        <div className="font-heading">{player.name}</div>
-                        <div className="text-sm text-muted-foreground">{player.teams?.name}</div>
-                      </div>
-                    </div>
-                    <div className="text-2xl font-heading text-accent">{player.assists}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                      <span className="font-heading text-primary">{player.assists} Assists</span>
+                    </li>
+                  ))}
+                  {(!topAssists || topAssists.length === 0) && <p className="text-muted-foreground text-center">No assists yet.</p>}
+                </ol>
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Most Yellow Cards */}
-          <div 
-            className="glass-card p-6 rounded-xl cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => navigate("/stats/top-yellow-cards")}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 p-3 rounded-lg">
-                  <AlertTriangle className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-2xl font-heading">Most Yellow Cards</h2>
-              </div>
-              <span className="text-sm text-muted-foreground">Click to view all →</span>
-            </div>
-            
-            {loading ? (
-              <div className="text-center text-muted-foreground">Loading...</div>
-            ) : topYellowCards.length === 0 ? (
-              <div className="text-center text-muted-foreground">No top yellow cards available yet.</div>
-            ) : (
-              <div className="space-y-3">
-                {topYellowCards.map((player, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center justify-between p-4 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                    onClick={() => player.teams?.name && navigate(`/teams/${getTeamSlug(player.teams.name)}`)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center font-heading text-yellow-600">
-                        {index + 1}
+          {/* Top MOTM Awards */}
+          <Card className="glass-card animate-slide-in-right">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xl font-heading flex items-center gap-2">
+                <Award className="w-5 h-5 text-gold fill-gold" /> Most MOTM Awards
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingMotm ? renderLoading() : motmError ? renderError(motmError) : (
+                <ol className="space-y-3">
+                  {topMotm?.map((player, index) => (
+                    <li key={player.id} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-lg w-6 text-center">{index + 1}.</span>
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={player.team?.logo_url || "/placeholder-team.png"} alt={player.team?.name || "Team"} />
+                          <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{player.name}</span>
                       </div>
-                      <div>
-                        <div className="font-heading">{player.name}</div>
-                        <div className="text-sm text-muted-foreground">{player.teams?.name}</div>
-                      </div>
-                    </div>
-                    <div className="text-2xl font-heading text-yellow-600">{player.yellow_cards}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Most Red Cards */}
-          <div 
-            className="glass-card p-6 rounded-xl cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => navigate("/stats/top-red-cards")}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-red-600 to-red-700 p-3 rounded-lg">
-                  <AlertOctagon className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-2xl font-heading">Most Red Cards</h2>
-              </div>
-              <span className="text-sm text-muted-foreground">Click to view all →</span>
-            </div>
-            
-            {loading ? (
-              <div className="text-center text-muted-foreground">Loading...</div>
-            ) : topRedCards.length === 0 ? (
-              <div className="text-center text-muted-foreground">No top red cards available yet.</div>
-            ) : (
-              <div className="space-y-3">
-                {topRedCards.map((player, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center justify-between p-4 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                    onClick={() => player.teams?.name && navigate(`/teams/${getTeamSlug(player.teams.name)}`)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-red-600/20 flex items-center justify-center font-heading text-red-600">
-                        {index + 1}
-                      </div>
-                      <div>
-                        <div className="font-heading">{player.name}</div>
-                        <div className="text-sm text-muted-foreground">{player.teams?.name}</div>
-                      </div>
-                    </div>
-                    <div className="text-2xl font-heading text-red-600">{player.red_cards}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                      <span className="font-heading text-primary">{player.motm_awards} Awards</span>
+                    </li>
+                  ))}
+                  {(!topMotm || topMotm.length === 0) && <p className="text-muted-foreground text-center">No MOTM awards yet.</p>}
+                </ol>
+              )}
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Team Standings */}
+        <Card className="glass-card mb-12 animate-fade-in">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xl font-heading flex items-center gap-2">
+              <Shield className="w-5 h-5 text-green-500" /> Team Standings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingStandings ? renderLoading() : standingsError ? renderError(standingsError) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left text-muted-foreground">
+                  <thead className="text-xs text-foreground uppercase bg-muted/50">
+                    <tr>
+                      <th scope="col" className="px-4 py-3">#</th>
+                      <th scope="col" className="px-4 py-3">Team</th>
+                      <th scope="col" className="px-4 py-3">P</th>
+                      <th scope="col" className="px-4 py-3">W</th>
+                      <th scope="col" className="px-4 py-3">D</th>
+                      <th scope="col" className="px-4 py-3">L</th>
+                      <th scope="col" className="px-4 py-3">GF</th>
+                      <th scope="col" className="px-4 py-3">GA</th>
+                      <th scope="col" className="px-4 py-3">GD</th>
+                      <th scope="col" className="px-4 py-3">Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teamStandings?.map((team, index) => (
+                      <tr key={team.id} className="border-b border-muted/30 hover:bg-muted/10">
+                        <td className="px-4 py-3 font-medium">{index + 1}</td>
+                        <th scope="row" className="px-4 py-3 font-medium text-foreground whitespace-nowrap flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={team.logo_url || "/placeholder-team.png"} alt={team.name} />
+                            <AvatarFallback>{team.name.substring(0, 2)}</AvatarFallback>
+                          </Avatar>
+                          {team.name}
+                        </th>
+                        <td className="px-4 py-3">{team.wins + team.draws + team.losses}</td> {/* Played */}
+                        <td className="px-4 py-3">{team.wins}</td>
+                        <td className="px-4 py-3">{team.draws}</td>
+                        <td className="px-4 py-3">{team.losses}</td>
+                        <td className="px-4 py-3">{team.goals_for}</td>
+                        <td className="px-4 py-3">{team.goals_against}</td>
+                        <td className="px-4 py-3">{team.goals_for - team.goals_against}</td> {/* Goal Difference */}
+                        <td className="px-4 py-3 font-bold text-primary">{team.points}</td>
+                      </tr>
+                    ))}
+                    {(!teamStandings || teamStandings.length === 0) && (
+                      <tr><td colSpan={10} className="px-4 py-3 text-center text-muted-foreground">No team standings yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Upcoming Matches */}
+        <Card className="glass-card animate-fade-in">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xl font-heading flex items-center gap-2">
+              <CalendarDays className="w-5 h-5 text-purple-500" /> Upcoming Matches
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingUpcoming ? renderLoading() : upcomingError ? renderError(upcomingError) : (
+              <div className="space-y-4">
+                {upcomingMatches?.map((match) => (
+                  <div key={match.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={match.home_team?.logo_url || "/placeholder-team.png"} alt={match.home_team?.name || "Home Team"} />
+                        <AvatarFallback>{match.home_team?.name?.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium text-foreground">{match.home_team?.name}</span>
+                    </div>
+                    <span className="text-muted-foreground text-sm">vs</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-foreground">{match.away_team?.name}</span>
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={match.away_team?.logo_url || "/placeholder-team.png"} alt={match.away_team?.name || "Away Team"} />
+                        <AvatarFallback>{match.away_team?.name?.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(match.match_date).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+                {(!upcomingMatches || upcomingMatches.length === 0) && <p className="text-muted-foreground text-center">No upcoming matches.</p>}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
