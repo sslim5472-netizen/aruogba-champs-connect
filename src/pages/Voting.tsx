@@ -82,12 +82,12 @@ const Voting = () => {
   useEffect(() => {
     const checkUserVote = async () => {
       if (user && votableMatch) {
-        const { data: existingVote, error } = await supabase // Added error handling
+        const { data: existingVote, error } = await supabase
           .from('match_votes')
           .select('id')
           .eq('user_id', user.id)
           .eq('match_id', votableMatch.id)
-          .single();
+          .maybeSingle(); // Use maybeSingle to avoid 406 errors if no vote exists
         
         if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found, which is expected
           console.error("Error checking for existing vote:", error);
@@ -109,7 +109,7 @@ const Voting = () => {
       const { data, error } = await supabase
         .from('players')
         .select('*, team:teams(name, color)') // Fetch team color for styling
-        .in('team_id', [votableMatch.home_team_id, votableMatch.home_team_id]); // Corrected to include away_team_id
+        .in('team_id', [votableMatch.home_team_id, votableMatch.away_team_id]); // Corrected to include both home and away team IDs
       
       if (error) throw error;
       return data;
@@ -181,8 +181,8 @@ const Voting = () => {
         .select('id')
         .eq('user_id', user.id)
         .eq('match_id', votableMatch.id)
-        .single();
-
+        .maybeSingle(); // Use maybeSingle here too
+      
       if (checkError && checkError.code !== 'PGRST116') {
         console.error("Error re-checking for existing vote:", checkError);
         throw new Error("Failed to verify your voting status. Please try again.");
