@@ -16,7 +16,6 @@ const corsHeaders = {
 interface VoteConfirmationRequest {
   playerName: string;
   matchDetails: string;
-  userEmail: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
