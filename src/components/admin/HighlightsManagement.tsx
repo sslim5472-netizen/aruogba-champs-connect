@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
@@ -24,8 +24,8 @@ const highlightSchema = z.object({
   description: z.string().trim().max(1000, "Description too long").optional().nullable(),
   video_url: z.string().url("Must be a valid video URL").optional().nullable(),
   thumbnail_url: z.string().url("Must be a valid thumbnail URL").optional().nullable(),
-  match_id: z.string().uuid("Invalid match ID").optional().nullable(),
-  team_id: z.string().uuid("Invalid team ID").optional().nullable(),
+  match_id: z.string().optional().nullable(),
+  team_id: z.string().optional().nullable(),
 });
 
 interface Highlight {
@@ -103,9 +103,9 @@ export const HighlightsManagement = () => {
         .getPublicUrl(filePath);
 
       if (type === 'video') {
-        setFormData((prev) => ({ ...prev, video_url: publicUrl }));
+        setFormData({ ...formData, video_url: publicUrl });
       } else {
-        setFormData((prev) => ({ ...prev, thumbnail_url: publicUrl }));
+        setFormData({ ...formData, thumbnail_url: publicUrl });
       }
 
       toast.success(`${type === 'video' ? 'Video' : 'Thumbnail'} uploaded successfully`);

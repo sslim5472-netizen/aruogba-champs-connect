@@ -1,9 +1,6 @@
-// @ts-ignore
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-// @ts-ignore
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'; // Updated to 2.45.0
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
-// @ts-ignore
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
@@ -15,6 +12,7 @@ const corsHeaders = {
 interface VoteConfirmationRequest {
   playerName: string;
   matchDetails: string;
+  userEmail: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -30,11 +28,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Create Supabase client with user's JWT
-    // @ts-ignore
     const supabaseClient = createClient(
-      // @ts-ignore
       Deno.env.get('SUPABASE_URL') ?? '',
-      // @ts-ignore
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
@@ -47,15 +42,19 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     
     if (userError || !user) {
+      console.error('Auth error:', userError);
       throw new Error('Unauthorized');
     }
 
     // Check if email is verified
     if (!user.email_confirmed_at) {
+      console.error('Email not verified for user:', user.id);
       throw new Error('Email not verified. Please verify your email before voting.');
     }
 
     const { playerName, matchDetails }: VoteConfirmationRequest = await req.json();
+
+    console.log('Sending vote confirmation email to:', user.email);
 
     // Send email using Resend API
     const emailResponse = await fetch('https://api.resend.com/emails', {
@@ -115,6 +114,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailData = await emailResponse.json();
+
+    console.log("Vote confirmation email sent successfully:", emailData);
 
     return new Response(JSON.stringify({ 
       success: true,

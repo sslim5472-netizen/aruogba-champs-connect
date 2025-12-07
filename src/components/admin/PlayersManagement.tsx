@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
@@ -26,7 +26,7 @@ const playerSchema = z.object({
   assists: z.coerce.number().int().min(0, "Assists cannot be negative"),
   yellow_cards: z.coerce.number().int().min(0, "Yellow cards cannot be negative"),
   red_cards: z.coerce.number().int().min(0, "Red cards cannot be negative"),
-  clean_sheets: z.coerce.number().int().min(0, "Clean sheets cannot be negative"), // Added clean_sheets
+  clean_sheets: z.coerce.number().int().min(0, "Clean sheets cannot be negative"),
   motm_awards: z.coerce.number().int().min(0, "MOTM awards cannot be negative"),
 });
 
@@ -41,7 +41,7 @@ interface Player {
   assists: number;
   yellow_cards: number;
   red_cards: number;
-  clean_sheets: number; // Added clean_sheets
+  clean_sheets: number;
   motm_awards: number;
   teams: { name: string };
 }
@@ -60,7 +60,7 @@ export const PlayersManagement = () => {
     assists: number;
     yellow_cards: number;
     red_cards: number;
-    clean_sheets: number; // Added clean_sheets
+    clean_sheets: number;
     motm_awards: number;
   }>({
     name: "",
@@ -72,7 +72,7 @@ export const PlayersManagement = () => {
     assists: 0,
     yellow_cards: 0,
     red_cards: 0,
-    clean_sheets: 0, // Added clean_sheets
+    clean_sheets: 0,
     motm_awards: 0,
   });
 
@@ -156,7 +156,7 @@ export const PlayersManagement = () => {
       assists: 0,
       yellow_cards: 0,
       red_cards: 0,
-      clean_sheets: 0, // Added clean_sheets
+      clean_sheets: 0,
       motm_awards: 0,
     });
     setIsEditing(false);
@@ -175,7 +175,7 @@ export const PlayersManagement = () => {
       assists: player.assists,
       yellow_cards: player.yellow_cards,
       red_cards: player.red_cards,
-      clean_sheets: player.clean_sheets, // Added clean_sheets
+      clean_sheets: player.clean_sheets,
       motm_awards: player.motm_awards,
     });
     setIsEditing(true);
@@ -327,17 +327,6 @@ export const PlayersManagement = () => {
               </div>
 
               <div>
-                <Label htmlFor="clean_sheets">Clean Sheets</Label> {/* Added clean_sheets input */}
-                <Input
-                  id="clean_sheets"
-                  type="number"
-                  min="0"
-                  value={formData.clean_sheets}
-                  onChange={(e) => setFormData({ ...formData, clean_sheets: parseInt(e.target.value) })}
-                />
-              </div>
-
-              <div>
                 <Label htmlFor="motm">MOTM Awards</Label>
                 <Input
                   id="motm"
@@ -387,7 +376,6 @@ export const PlayersManagement = () => {
                         <span>🎯 {player.assists}</span>
                         <span>🟨 {player.yellow_cards}</span>
                         <span>🟥 {player.red_cards}</span>
-                        <span>🧤 {player.clean_sheets}</span> {/* Display clean_sheets */}
                         <span>🏆 {player.motm_awards}</span>
                       </div>
 
