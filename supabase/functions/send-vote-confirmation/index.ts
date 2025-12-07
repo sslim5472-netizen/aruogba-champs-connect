@@ -12,7 +12,7 @@ const corsHeaders = {
 interface VoteConfirmationRequest {
   playerName: string;
   matchDetails: string;
-  userEmail: string;
+  // userEmail: string; // This is not used in the function, user.email is used.
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -24,6 +24,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get authorization header
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
+      console.error('Error: Missing authorization header');
       throw new Error('Missing authorization header');
     }
 
@@ -42,7 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     
     if (userError || !user) {
-      console.error('Auth error:', userError);
+      console.error('Auth error:', userError?.message || 'User not found');
       throw new Error('Unauthorized');
     }
 
@@ -54,7 +55,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { playerName, matchDetails }: VoteConfirmationRequest = await req.json();
 
-    console.log('Sending vote confirmation email to:', user.email);
+    console.log('Attempting to send vote confirmation email.');
+    console.log(`  Recipient: ${user.email}`);
+    console.log(`  Player: ${playerName}, Match: ${matchDetails}`);
+    console.log(`  RESEND_API_KEY is ${RESEND_API_KEY ? 'set' : 'NOT SET'}`);
+
 
     // Send email using Resend API
     const emailResponse = await fetch('https://api.resend.com/emails', {
@@ -110,6 +115,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!emailResponse.ok) {
       const errorData = await emailResponse.json();
+      console.error(`Resend API error: Status ${emailResponse.status}, Body:`, errorData);
       throw new Error(`Resend API error: ${errorData.message || 'Unknown error'}`);
     }
 
