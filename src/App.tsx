@@ -32,7 +32,7 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <Sonner />
-        <BrowserRouter future={{ v7_startTransition: true }}>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}> {/* Added v7_relativeSplatPath */}
           <div className="flex flex-col min-h-screen">
             <div className="flex-grow">
               <VotingNotification /> {/* Place the notification component here */}
