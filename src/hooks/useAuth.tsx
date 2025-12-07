@@ -2,6 +2,10 @@ import { createContext, useContext, useEffect, useState, ReactNode, useRef } fro
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Database } from "@/integrations/supabase/types"; // Import Database type
+
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type UserRoleRow = Database['public']['Tables']['user_roles']['Row'];
 
 interface AuthContextType {
   user: User | null;
@@ -43,10 +47,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserProfile = async (userId: string) => {
     const { data: profileData, error: profileError } = await supabase
-      .from('profiles' as any) // Type assertion to fix TS error
+      .from('profiles')
       .select('first_name, last_name')
       .eq('id', userId)
-      .single<{ first_name: string | null; last_name: string | null } | null>();
+      .single<Pick<ProfileRow, 'first_name' | 'last_name'> | null>();
 
     if (profileError) {
       console.error("Error fetching profile:", profileError);
@@ -73,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .from('user_roles')
             .select('role, team_id')
             .eq('user_id', session.user.id)
-            .single<{ role: string; team_id: string | null } | null>();
+            .single<Pick<UserRoleRow, 'role' | 'team_id'> | null>();
           
           if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
              console.error("Error fetching user role:", roleError);
@@ -108,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .from('user_roles')
           .select('role, team_id')
           .eq('user_id', session.user.id)
-          .single<{ role: string; team_id: string | null } | null>();
+          .single<Pick<UserRoleRow, 'role' | 'team_id'> | null>();
         
          if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
              console.error("Error fetching user role on init:", roleError);

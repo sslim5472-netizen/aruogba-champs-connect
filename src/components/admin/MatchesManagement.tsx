@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { z } from "zod";
@@ -27,7 +27,7 @@ const matchSchema = z.object({
   status: z.enum(["scheduled", "live", "finished"]),
   home_score: z.coerce.number().int().min(0, "Score cannot be negative"),
   away_score: z.coerce.number().int().min(0, "Score cannot be negative"),
-  live_stream_url: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  live_stream_url: z.string().url("Must be a valid URL").optional().nullable(), // Made nullable
 }).refine((data) => data.home_team_id !== data.away_team_id, {
   message: "Home and away teams must be different",
   path: ["away_team_id"],
@@ -121,6 +121,7 @@ export const MatchesManagement = () => {
       const { error } = await supabase.from("matches").insert([{
         ...newMatch,
         match_date: toLocalISOStringWithOffset(newMatch.match_date), // Convert to ISO with local offset
+        live_stream_url: newMatch.live_stream_url || null, // Convert empty string to null
       }]);
       if (error) throw error;
     },
@@ -137,6 +138,7 @@ export const MatchesManagement = () => {
       const { error } = await supabase.from("matches").update({
         ...data,
         match_date: toLocalISOStringWithOffset(data.match_date), // Convert to ISO with local offset
+        live_stream_url: data.live_stream_url || null, // Convert empty string to null
       }).eq("id", id);
       if (error) throw error;
     },
@@ -185,7 +187,7 @@ export const MatchesManagement = () => {
       status: match.status as "scheduled" | "live" | "finished",
       home_score: match.home_score,
       away_score: match.away_score,
-      live_stream_url: match.live_stream_url || DEFAULT_LIVE_STREAM_URL, // Fallback to default if null
+      live_stream_url: match.live_stream_url || "", // Fallback to empty string for input
     });
     setIsEditing(true);
   };

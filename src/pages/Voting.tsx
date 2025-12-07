@@ -3,11 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Check, LogIn, Star } from "lucide-react"; // Added Star icon
+import { Trophy, Check, LogIn, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useAuth } from "@/hooks/useAuth"; // Import useAuth
+import { useAuth } from "@/hooks/useAuth";
 
 const voteSchema = z.object({
   playerId: z.string().uuid('Invalid player selection'),
@@ -21,7 +21,7 @@ const VOTING_WINDOW_MINUTES = 5; // Voting opens 5 minutes before estimated end 
 const Voting = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
-  const { user, loading: authLoading } = useAuth(); // Use useAuth hook
+  const { user, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -175,7 +175,7 @@ const Voting = () => {
       const { error: emailError } = await supabase.functions.invoke('send-vote-confirmation', {
         body: {
           playerName: selectedPlayerData?.name || 'Unknown Player',
-          matchDetails: `${votableMatch.home_team.name} ${votableMatch.home_score} - ${votableMatch.away_score} ${votableMatch.away_team.name}`,
+          matchDetails: `${votableMatch.home_team.name} ${votableMatch.home_score} - ${votableMatch.away_team.name}`,
         }
       });
 
@@ -216,7 +216,6 @@ const Voting = () => {
           filter: `match_id=eq.${votableMatch.id}`,
         },
         () => {
-          console.log("Realtime update: match_votes table changed, refetching vote results.");
           if (hasVoted) { // Only invalidate if user has already voted to see live updates
             queryClient.invalidateQueries({ queryKey: ['vote-results', votableMatch.id] });
           }

@@ -2,16 +2,17 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Target, AlertTriangle, Trophy, Video } from "lucide-react";
+import { Clock, Target, AlertTriangle, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { getTeamLogo } from "@/lib/teamUtils"; // Import getTeamLogo
 
 const LiveMatch = () => {
   const navigate = useNavigate();
   const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
   const queryClient = useQueryClient(); // Initialize queryClient
 
-  const { data: liveMatch, refetch } = useQuery({
+  const { data: liveMatch } = useQuery({
     queryKey: ['live-match', liveMatchId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -90,7 +91,7 @@ const LiveMatch = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, liveMatchId]); // Added queryClient and liveMatchId to dependency array
+  }, [queryClient, liveMatchId]);
 
   if (!liveMatch) {
     return (
@@ -178,7 +179,7 @@ const LiveMatch = () => {
             {/* Home Team */}
             <div className="text-center">
               <img 
-                src={liveMatch.home_team.logo_url} 
+                src={getTeamLogo(liveMatch.home_team.name, liveMatch.home_team.logo_url)} 
                 alt={liveMatch.home_team.name}
                 className="w-24 h-24 mx-auto mb-4 object-contain"
               />
@@ -198,7 +199,7 @@ const LiveMatch = () => {
             {/* Away Team */}
             <div className="text-center">
               <img 
-                src={liveMatch.away_team.logo_url} 
+                src={getTeamLogo(liveMatch.away_team.name, liveMatch.away_team.logo_url)} 
                 alt={liveMatch.away_team.name}
                 className="w-24 h-24 mx-auto mb-4 object-contain"
               />
