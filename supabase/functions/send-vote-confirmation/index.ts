@@ -1,10 +1,9 @@
-/// <reference lib="deno.ns" />
-/// <reference types="https://deno.land/std@0.190.0/http/server.ts" />
-/// <reference types="https://esm.sh/@supabase/supabase-js@2.45.0" />
-
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+// @ts-ignore
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'; // Updated to 2.45.0
 
+// @ts-ignore
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
@@ -31,8 +30,11 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Create Supabase client with user's JWT
+    // @ts-ignore
     const supabaseClient = createClient(
+      // @ts-ignore
       Deno.env.get('SUPABASE_URL') ?? '',
+      // @ts-ignore
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
