@@ -82,7 +82,7 @@ export type Database = {
           thumbnail_url: string | null
           title: string
           updated_at: string
-          video_url: string | null // Made nullable
+          video_url: string
         }
         Insert: {
           created_at?: string
@@ -92,8 +92,8 @@ export type Database = {
           team_id?: string | null
           thumbnail_url?: string | null
           title: string
-          updated_at?: string // Added updated_at
-          video_url?: string | null // Made nullable
+          updated_at?: string
+          video_url: string
         }
         Update: {
           created_at?: string
@@ -104,7 +104,7 @@ export type Database = {
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
-          video_url?: string | null
+          video_url?: string
         }
         Relationships: [
           {

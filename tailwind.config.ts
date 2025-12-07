@@ -49,7 +49,6 @@ export default {
         },
         gold: "hsl(var(--gold))",
         silver: "hsl(var(--silver))",
-        bronze: "hsl(28 80% 50%)", // Added bronze color
         navy: "hsl(var(--navy))",
       },
       fontFamily: {

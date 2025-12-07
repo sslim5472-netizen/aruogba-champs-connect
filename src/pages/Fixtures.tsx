@@ -3,13 +3,30 @@ import Navigation from "@/components/Navigation";
 import { Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
-import { getTeamLogo } from "@/lib/teamUtils"; // Import the new utility
+import airwayLogo from "@/assets/airway-fc.jpg";
+import knightsLogo from "@/assets/knights-fc.jpg";
+import starsLogo from "@/assets/stars-fc.jpg";
+import spartaLogo from "@/assets/sparta-fc.jpg";
+import kingsLogo from "@/assets/kings-fc.jpg";
+import enjoymentLogo from "@/assets/enjoyment-fc.jpg";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const Fixtures = () => {
   const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  const getTeamLogo = (teamName: string) => {
+    const logoMap: { [key: string]: string } = {
+      "Airway FC": airwayLogo,
+      "Knights FC": knightsLogo,
+      "Stars FC": starsLogo,
+      "Sparta FC": spartaLogo,
+      "Kings FC": kingsLogo,
+      "Enjoyment FC": enjoymentLogo,
+    };
+    return logoMap[teamName] || "";
+  };
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -60,12 +77,12 @@ const Fixtures = () => {
         ) : matches.length === 0 ? (
           <div className="text-center text-muted-foreground">No matches scheduled yet</div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4"> {/* Added space-y-4 for consistent spacing */}
           {matches.map((match, index) => (
             <div 
               key={index} 
-              className="glass-card p-6 rounded-xl hover:glow-effect transition-all cursor-pointer"
-              onClick={() => handleMatchClick(match)}
+              className="glass-card p-6 rounded-xl hover:glow-effect transition-all cursor-pointer" // Added cursor-pointer
+              onClick={() => handleMatchClick(match)} // Added onClick handler
             >
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -87,7 +104,7 @@ const Fixtures = () => {
                     <div className="font-heading text-lg">{match.home_team?.name}</div>
                     {match.home_team?.name && (
                       <img 
-                        src={getTeamLogo(match.home_team.name, match.home_team.logo_url)} 
+                        src={getTeamLogo(match.home_team.name)} 
                         alt={match.home_team.name}
                         className="w-10 h-10 rounded-full object-contain border-2 border-border"
                       />
@@ -101,7 +118,7 @@ const Fixtures = () => {
                   <div className="text-left flex-1 flex items-center gap-3">
                     {match.away_team?.name && (
                       <img 
-                        src={getTeamLogo(match.away_team.name, match.away_team.logo_url)} 
+                        src={getTeamLogo(match.away_team.name)} 
                         alt={match.away_team.name}
                         className="w-10 h-10 rounded-full object-contain border-2 border-border"
                       />

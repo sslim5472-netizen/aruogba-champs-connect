@@ -6,7 +6,6 @@ import { Trophy, Calendar, BarChart3, Vote, Radio, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import HomeVotingSection from "@/components/HomeVotingSection"; // Import the new component
 
 // Define a type for the team data including player count
 interface TeamWithPlayerCount {
@@ -100,20 +99,13 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Home Page MOTM Voting Section */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-xl mx-auto">
-          <HomeVotingSection />
-        </div>
-      </div>
-
       {/* Teams Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="text-center mb-12 animate-fade-in">
           <h2 className="text-3xl md:text-4xl font-heading gradient-text mb-4">
             Teams
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground">
             Meet the six teams battling for tournament glory
           </p>
         </div>
