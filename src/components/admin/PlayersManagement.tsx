@@ -91,6 +91,16 @@ export const PlayersManagement = () => {
     },
   });
 
+  // Group players by team
+  const groupedPlayers = players?.reduce((acc, player) => {
+    const teamName = player.teams?.name || "Unassigned";
+    if (!acc[teamName]) {
+      acc[teamName] = [];
+    }
+    acc[teamName].push(player);
+    return acc;
+  }, {} as Record<string, Player[]>) || {};
+
   const createMutation = useMutation({
     mutationFn: async (newPlayer: typeof formData) => {
       const { error } = await supabase.from("players").insert([newPlayer]);
@@ -340,50 +350,57 @@ export const PlayersManagement = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-3">
-        {players?.map((player) => (
-          <Card key={player.id} className="p-4 glass-card">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="text-2xl font-bold text-muted-foreground w-12 text-center">
-                  #{player.jersey_number}
-                </div>
-                <div>
-                  <h3 className="font-semibold">{player.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {player.teams.name} • {player.position}
-                  </p>
-                </div>
-              </div>
+      <div className="space-y-6">
+        {Object.keys(groupedPlayers).sort().map((teamName) => (
+          <div key={teamName} className="space-y-3">
+            <h3 className="text-xl font-semibold gradient-text mt-6 mb-3">{teamName}</h3>
+            <div className="grid grid-cols-1 gap-3">
+              {groupedPlayers[teamName].map((player) => (
+                <Card key={player.id} className="p-4 glass-card">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="text-2xl font-bold text-muted-foreground w-12 text-center">
+                        #{player.jersey_number}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">{player.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {player.teams.name} • {player.position}
+                        </p>
+                      </div>
+                    </div>
 
-              <div className="flex items-center gap-6">
-                <div className="text-sm text-muted-foreground space-x-4">
-                  <span>⚽ {player.goals}</span>
-                  <span>🎯 {player.assists}</span>
-                  <span>🟨 {player.yellow_cards}</span>
-                  <span>🟥 {player.red_cards}</span>
-                  <span>🏆 {player.motm_awards}</span>
-                </div>
+                    <div className="flex items-center gap-6">
+                      <div className="text-sm text-muted-foreground space-x-4">
+                        <span>⚽ {player.goals}</span>
+                        <span>🎯 {player.assists}</span>
+                        <span>🟨 {player.yellow_cards}</span>
+                        <span>🟥 {player.red_cards}</span>
+                        <span>🏆 {player.motm_awards}</span>
+                      </div>
 
-                <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => handleEdit(player)}>
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      if (confirm("Are you sure you want to delete this player?")) {
-                        deleteMutation.mutate(player.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                </div>
-              </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(player)}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            if (confirm("Are you sure you want to delete this player?")) {
+                              deleteMutation.mutate(player.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
-          </Card>
+          </div>
         ))}
       </div>
     </div>
