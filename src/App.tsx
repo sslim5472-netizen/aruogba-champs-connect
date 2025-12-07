@@ -15,14 +15,15 @@ import TopYellowCards from "./pages/TopYellowCards";
 import TopRedCards from "./pages/TopRedCards";
 import Standings from "./pages/Standings";
 import Voting from "./pages/Voting";
-import Media from "./pages/Media"; // Import the Media component
+import Media from "./pages/Media";
 import MotmAwards from "./pages/MotmAwards";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import AdminManagement from "./pages/AdminManagement";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import Footer from "./components/Footer"; // Import the new Footer component
+import Footer from "./components/Footer";
+import VotingNotification from "./components/VotingNotification"; // Import the new component
 
 const queryClient = new QueryClient();
 
@@ -32,8 +33,9 @@ const App = () => (
       <AuthProvider>
         <Sonner />
         <BrowserRouter future={{ v7_startTransition: true }}>
-          <div className="flex flex-col min-h-screen"> {/* Added flex container for sticky footer */}
-            <div className="flex-grow"> {/* Content area that grows */}
+          <div className="flex flex-col min-h-screen">
+            <div className="flex-grow">
+              <VotingNotification /> {/* Place the notification component here */}
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/teams" element={<Teams />} />
@@ -47,8 +49,8 @@ const App = () => (
                 <Route path="/stats/top-red-cards" element={<TopRedCards />} />
                 <Route path="/standings" element={<Standings />} />
                 <Route path="/voting" element={<Voting />} />
-                <Route path="/media" element={<Media />} /> {/* Existing media route */}
-                <Route path="/highlights" element={<Media />} /> {/* Add direct route for highlights */}
+                <Route path="/media" element={<Media />} />
+                <Route path="/highlights" element={<Media />} />
                 <Route path="/motm" element={<MotmAwards />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
@@ -57,7 +59,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
-            <Footer /> {/* Render the Footer outside of Routes */}
+            <Footer />
           </div>
         </BrowserRouter>
       </AuthProvider>

@@ -237,6 +237,45 @@ export type Database = {
           },
         ]
       }
+      match_votes: { // Added match_votes table
+        Row: {
+          created_at: string
+          id: string
+          match_id: string
+          player_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_id: string
+          player_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_id?: string
+          player_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_votes_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_votes_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       motm_awards: {
         Row: {
           id: string
@@ -333,6 +372,41 @@ export type Database = {
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      profiles: {
+        Row: {
+          id: string
+          avatar_url: string | null
+          created_at: string
+          updated_at: string
+          first_name: string | null
+          last_name: string | null
+        }
+        Insert: {
+          id: string
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string
+          first_name?: string | null
+          last_name?: string | null
+        }
+        Update: {
+          id?: string
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string
+          first_name?: string | null
+          last_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
         ]
       }
       teams: {

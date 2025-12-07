@@ -1,90 +1,118 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Check, LogIn } from "lucide-react";
+import { Trophy, Check, LogIn, Star } from "lucide-react"; // Added Star icon
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useAuth } from "@/hooks/useAuth"; // Import useAuth
 
 const voteSchema = z.object({
   playerId: z.string().uuid('Invalid player selection'),
   matchId: z.string().uuid('Invalid match selection')
 });
 
+// Assume a standard match duration for calculating end time
+const MATCH_DURATION_MINUTES = 90;
+const VOTING_WINDOW_MINUTES = 5; // Voting opens 5 minutes before estimated end time
+
 const Voting = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading } = useAuth(); // Use useAuth hook
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Check authentication
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    checkAuth();
+  // Function to determine the currently votable match
+  const fetchVotableMatch = useCallback(async () => {
+    const { data: liveMatches, error } = await supabase
+      .from('matches')
+      .select(`
+        id,
+        match_date,
+        home_team_id,
+        away_team_id,
+        home_score,
+        away_score,
+        home_team:teams!matches_home_team_id_fkey(name),
+        away_team:teams!matches_away_team_id_fkey(name)
+      `)
+      .eq('status', 'live')
+      .order('match_date', { ascending: true }); // Order by date to pick the earliest live match
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    if (error) {
+      console.error("Error fetching live matches for voting page:", error);
+      return null;
+    }
 
-    return () => subscription.unsubscribe();
+    const now = new Date();
+    for (const match of liveMatches || []) {
+      const matchStartTime = new Date(match.match_date);
+      const estimatedEndTime = new Date(matchStartTime.getTime() + MATCH_DURATION_MINUTES * 60 * 1000);
+      const votingStartsAt = new Date(estimatedEndTime.getTime() - VOTING_WINDOW_MINUTES * 60 * 1000);
+
+      if (now >= votingStartsAt && now < estimatedEndTime) {
+        return match;
+      }
+    }
+    return null;
   }, []);
 
-  const { data: recentMatch } = useQuery({
-    queryKey: ['recent-finished-match'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('matches')
-        .select(`
-          *,
-          home_team:teams!matches_home_team_id_fkey(*),
-          away_team:teams!matches_away_team_id_fkey(*)
-        `)
-        .eq('status', 'finished')
-        .order('match_date', { ascending: false })
-        .limit(1)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
-    },
+  const { data: votableMatch, isLoading: matchLoading } = useQuery({
+    queryKey: ['votable-match', user?.id],
+    queryFn: fetchVotableMatch,
+    enabled: !authLoading,
+    refetchInterval: 15 * 1000, // Refresh every 15 seconds to check for new votable matches
   });
 
-  const { data: players } = useQuery({
-    queryKey: ['match-players', recentMatch?.id],
+  // Check if user has already voted for the current votable match
+  useEffect(() => {
+    const checkUserVote = async () => {
+      if (user && votableMatch) {
+        const { data: existingVote } = await supabase
+          .from('match_votes') // Use match_votes table
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('match_id', votableMatch.id)
+          .single();
+        setHasVoted(!!existingVote);
+      } else {
+        setHasVoted(false);
+      }
+    };
+    checkUserVote();
+  }, [user, votableMatch]);
+
+  const { data: players, isLoading: playersLoading } = useQuery({
+    queryKey: ['match-players', votableMatch?.id],
     queryFn: async () => {
-      if (!recentMatch) return [];
+      if (!votableMatch) return [];
       
       const { data, error } = await supabase
         .from('players')
         .select('*, team:teams(*)')
-        .in('team_id', [recentMatch.home_team_id, recentMatch.away_team_id]);
+        .in('team_id', [votableMatch.home_team_id, votableMatch.away_team_id]);
       
       if (error) throw error;
       return data;
     },
-    enabled: !!recentMatch,
+    enabled: !!votableMatch,
   });
 
-  const { data: voteResults } = useQuery({
-    queryKey: ['vote-results', recentMatch?.id],
+  const { data: voteResults, isLoading: votesLoading } = useQuery({
+    queryKey: ['vote-results', votableMatch?.id],
     queryFn: async () => {
-      if (!recentMatch) return [];
+      if (!votableMatch) return {};
       
-      // Use public_votes view to protect voter privacy
       const { data, error } = await supabase
         .from('public_votes')
         .select('player_id')
-        .eq('match_id', recentMatch.id);
+        .eq('match_id', votableMatch.id);
       
       if (error) throw error;
       
-      // Count votes per player
       const voteCounts: Record<string, number> = {};
       data.forEach((vote) => {
         voteCounts[vote.player_id] = (voteCounts[vote.player_id] || 0) + 1;
@@ -92,74 +120,72 @@ const Voting = () => {
       
       return voteCounts;
     },
-    enabled: !!recentMatch,
+    enabled: !!votableMatch && hasVoted, // Only fetch results if user has voted
+    refetchInterval: hasVoted ? 10 * 1000 : false, // Refresh results every 10 seconds if user has voted
   });
+
+  // Determine the leading player
+  const leadingPlayerId = Object.keys(voteResults || {}).reduce((a, b) => 
+    (voteResults?.[a] || 0) > (voteResults?.[b] || 0) ? a : b, null as string | null
+  );
 
   const voteMutation = useMutation({
     mutationFn: async (playerId: string) => {
-      if (!recentMatch) throw new Error('No match selected');
-      if (!user) throw new Error('Must be logged in to vote');
+      if (!votableMatch) throw new Error('No match available for voting.');
+      if (!user) throw new Error('You must be logged in to vote.');
 
-      // Check email verification
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser?.email_confirmed_at) {
         throw new Error('Please verify your email address before voting. Check your inbox for the verification link.');
       }
 
-      // Validate input
       const result = voteSchema.safeParse({ 
         playerId, 
-        matchId: recentMatch.id 
+        matchId: votableMatch.id 
       });
       
       if (!result.success) {
         throw new Error(result.error.errors[0].message);
       }
 
-      // Check if user already voted for this match
       const { data: existingVote } = await supabase
-        .from('votes')
+        .from('match_votes') // Use match_votes table
         .select('id')
         .eq('user_id', user.id)
-        .eq('match_id', recentMatch.id)
+        .eq('match_id', votableMatch.id)
         .single();
 
       if (existingVote) {
-        throw new Error('You have already voted for this match');
+        throw new Error('You have already voted for this match.');
       }
       
-      // Submit vote
       const { error } = await supabase
-        .from('votes')
+        .from('match_votes') // Use match_votes table
         .insert({
-          match_id: recentMatch.id,
+          match_id: votableMatch.id,
           player_id: playerId,
           user_id: user.id,
-          voter_ip: 'authenticated',
         });
       
       if (error) throw error;
 
-      // Get player details for confirmation email
       const selectedPlayerData = players?.find(p => p.id === playerId);
       
-      // Send confirmation email
       const { error: emailError } = await supabase.functions.invoke('send-vote-confirmation', {
         body: {
           playerName: selectedPlayerData?.name || 'Unknown Player',
-          matchDetails: `${recentMatch.home_team.name} ${recentMatch.home_score} - ${recentMatch.away_score} ${recentMatch.away_team.name}`,
+          matchDetails: `${votableMatch.home_team.name} ${votableMatch.home_score} - ${votableMatch.away_score} ${votableMatch.away_team.name}`,
         }
       });
 
       if (emailError) {
         console.error('Failed to send confirmation email:', emailError);
-        // Don't throw - vote was successful even if email failed
       }
 
       return { playerId };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vote-results'] });
+      queryClient.invalidateQueries({ queryKey: ['vote-results', votableMatch?.id] });
       setHasVoted(true);
       toast.success('Vote submitted successfully! Check your email for confirmation.');
     },
@@ -173,6 +199,49 @@ const Voting = () => {
       voteMutation.mutate(selectedPlayer);
     }
   };
+
+  // Realtime subscription for match_votes
+  useEffect(() => {
+    if (!votableMatch) return;
+
+    const channel = supabase
+      .channel(`match_votes_channel_${votableMatch.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'match_votes',
+          filter: `match_id=eq.${votableMatch.id}`,
+        },
+        () => {
+          console.log("Realtime update: match_votes table changed, refetching vote results.");
+          if (hasVoted) { // Only invalidate if user has already voted to see live updates
+            queryClient.invalidateQueries({ queryKey: ['vote-results', votableMatch.id] });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, votableMatch, hasVoted]);
+
+  if (authLoading || matchLoading || playersLoading || votesLoading) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="container mx-auto px-4 py-12">
+          <div className="glass-card p-12 rounded-xl text-center">
+            <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground animate-pulse" />
+            <h2 className="text-2xl font-heading mb-2">Loading Voting Data...</h2>
+            <p className="text-muted-foreground">Please wait</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Show signup/login prompt if not authenticated
   if (!user) {
@@ -198,16 +267,16 @@ const Voting = () => {
     );
   }
 
-  if (!recentMatch) {
+  if (!votableMatch) {
     return (
       <div className="min-h-screen">
         <Navigation />
         <div className="container mx-auto px-4 py-12">
           <div className="glass-card p-12 rounded-xl text-center">
             <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-2xl font-heading mb-2">No Recent Matches</h2>
+            <h2 className="text-2xl font-heading mb-2">No Active Voting</h2>
             <p className="text-muted-foreground">
-              Voting will be available after matches are completed
+              Voting will be available for live matches 5 minutes before their estimated end time.
             </p>
           </div>
         </div>
@@ -226,10 +295,10 @@ const Voting = () => {
             Player of the Match
           </h1>
           <p className="text-muted-foreground">
-            {recentMatch.home_team.name} vs {recentMatch.away_team.name}
+            {votableMatch.home_team.name} vs {votableMatch.away_team.name}
           </p>
           <p className="text-sm text-muted-foreground">
-            Final Score: {recentMatch.home_score} - {recentMatch.away_score}
+            Current Score: {votableMatch.home_score} - {votableMatch.away_score}
           </p>
         </div>
 
@@ -243,10 +312,14 @@ const Voting = () => {
               <div className="space-y-2">
                 {players
                   ?.sort((a, b) => (voteResults?.[b.id] || 0) - (voteResults?.[a.id] || 0))
-                  .slice(0, 5)
                   .map((player) => (
                     <div key={player.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <span className="font-heading">{player.name}</span>
+                      <span className="font-heading flex items-center gap-2">
+                        {player.name}
+                        {leadingPlayerId === player.id && (
+                          <Star className="w-4 h-4 text-gold fill-gold" />
+                        )}
+                      </span>
                       <span className="text-primary font-heading">{voteResults?.[player.id] || 0} votes</span>
                     </div>
                   ))}
