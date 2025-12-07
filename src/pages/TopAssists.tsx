@@ -22,7 +22,8 @@ const TopAssists = () => {
         .order("assists", { ascending: false })
         .limit(10);
 
-      if (assists) setTopAssists(assists);
+      // Filter out players with 0 assists before setting state
+      if (assists) setTopAssists(assists.filter(p => p.assists > 0));
       setLoading(false);
     };
 

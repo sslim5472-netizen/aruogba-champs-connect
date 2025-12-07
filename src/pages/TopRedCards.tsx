@@ -22,7 +22,8 @@ const TopRedCards = () => {
         .order("red_cards", { ascending: false })
         .limit(10);
 
-      if (cards) setTopRedCards(cards);
+      // Filter out players with 0 red cards before setting state
+      if (cards) setTopRedCards(cards.filter(p => p.red_cards > 0));
       setLoading(false);
     };
 

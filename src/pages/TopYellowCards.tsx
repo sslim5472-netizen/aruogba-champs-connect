@@ -22,7 +22,8 @@ const TopYellowCards = () => {
         .order("yellow_cards", { ascending: false })
         .limit(10);
 
-      if (cards) setTopYellowCards(cards);
+      // Filter out players with 0 yellow cards before setting state
+      if (cards) setTopYellowCards(cards.filter(p => p.yellow_cards > 0));
       setLoading(false);
     };
 

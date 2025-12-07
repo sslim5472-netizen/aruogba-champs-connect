@@ -22,7 +22,8 @@ const TopScorers = () => {
         .order("goals", { ascending: false })
         .limit(10);
 
-      if (scorers) setTopScorers(scorers);
+      // Filter out players with 0 goals before setting state
+      if (scorers) setTopScorers(scorers.filter(p => p.goals > 0));
       setLoading(false);
     };
 
