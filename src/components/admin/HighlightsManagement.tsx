@@ -48,8 +48,8 @@ export const HighlightsManagement = () => {
     description: "",
     video_url: "",
     thumbnail_url: "",
-    match_id: "",
-    team_id: "",
+    match_id: "none", // Changed from "" to "none"
+    team_id: "none",  // Changed from "" to "none"
   });
 
   const { data: matches } = useQuery({
@@ -187,8 +187,8 @@ export const HighlightsManagement = () => {
       description: "",
       video_url: "",
       thumbnail_url: "",
-      match_id: "",
-      team_id: "",
+      match_id: "none", // Changed from "" to "none"
+      team_id: "none",  // Changed from "" to "none"
     });
     setIsEditing(false);
     setEditingHighlight(null);
@@ -201,8 +201,8 @@ export const HighlightsManagement = () => {
       description: highlight.description || "",
       video_url: highlight.video_url || "",
       thumbnail_url: highlight.thumbnail_url || "",
-      match_id: highlight.match_id || "",
-      team_id: highlight.team_id || "",
+      match_id: highlight.match_id || "none", // Ensure "none" if null
+      team_id: highlight.team_id || "none",   // Ensure "none" if null
     });
     setIsEditing(true);
   };
@@ -212,14 +212,14 @@ export const HighlightsManagement = () => {
     
     try {
       // Parse and transform formData before mutation
-      // Convert empty strings for optional fields to null
+      // Convert "none" for optional fields to null for the database
       const processedData = {
         ...formData,
         description: formData.description.trim() === "" ? null : formData.description,
         video_url: formData.video_url.trim() === "" ? null : formData.video_url,
         thumbnail_url: formData.thumbnail_url.trim() === "" ? null : formData.thumbnail_url,
-        match_id: formData.match_id.trim() === "" ? null : formData.match_id,
-        team_id: formData.team_id.trim() === "" ? null : formData.team_id,
+        match_id: formData.match_id === "none" ? null : formData.match_id, // Convert "none" to null
+        team_id: formData.team_id === "none" ? null : formData.team_id,     // Convert "none" to null
       };
       
       const parsedData = highlightSchema.parse(processedData);
@@ -340,7 +340,7 @@ export const HighlightsManagement = () => {
                     <SelectValue placeholder="Select match" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem> {/* Changed value from "" to "none" */}
                     {matches?.map((match: any) => (
                       <SelectItem key={match.id} value={match.id}>
                         {match.home_team.name} vs {match.away_team.name}
@@ -360,7 +360,7 @@ export const HighlightsManagement = () => {
                     <SelectValue placeholder="Select team" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem> {/* Changed value from "" to "none" */}
                     {teams?.map((team) => (
                       <SelectItem key={team.id} value={team.id}>
                         {team.name}
