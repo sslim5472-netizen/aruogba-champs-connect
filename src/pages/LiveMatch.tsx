@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Clock, Target, AlertTriangle, Trophy, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { getTeamLogo } from "@/lib/teamUtils"; // Import the utility
 
 const LiveMatch = () => {
   const navigate = useNavigate();
@@ -178,7 +179,7 @@ const LiveMatch = () => {
             {/* Home Team */}
             <div className="text-center">
               <img 
-                src={liveMatch.home_team.logo_url} 
+                src={getTeamLogo(liveMatch.home_team.name, liveMatch.home_team.logo_url)} 
                 alt={liveMatch.home_team.name}
                 className="w-24 h-24 mx-auto mb-4 object-contain"
               />
@@ -198,7 +199,7 @@ const LiveMatch = () => {
             {/* Away Team */}
             <div className="text-center">
               <img 
-                src={liveMatch.away_team.logo_url} 
+                src={getTeamLogo(liveMatch.away_team.name, liveMatch.away_team.logo_url)} 
                 alt={liveMatch.away_team.name}
                 className="w-24 h-24 mx-auto mb-4 object-contain"
               />
