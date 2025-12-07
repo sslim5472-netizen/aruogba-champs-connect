@@ -1,8 +1,13 @@
+// @ts-ignore
 /// <reference lib="deno.ns" />
+// @ts-ignore
 /// <reference types="https://deno.land/std@0.190.0/http/server.ts" />
+// @ts-ignore
 /// <reference types="https://esm.sh/@supabase/supabase-js@2.45.0" />
 
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
@@ -19,7 +24,9 @@ serve(async (req) => {
     // Create a Supabase client with the service role key
     // This allows the function to bypass Row Level Security (RLS)
     const supabaseClient = createClient(
+      // @ts-ignore
       Deno.env.get('SUPABASE_URL') ?? '',
+      // @ts-ignore
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', // Use service role key
       {
         auth: {
