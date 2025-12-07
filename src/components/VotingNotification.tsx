@@ -122,7 +122,7 @@ const VotingNotification = () => {
             <Button 
               variant="ghost" 
               onClick={() => {
-                console.log("Close button clicked. Dismissing toast with ID:", t); // Use 't' directly
+                console.log("Close button clicked. Dismissing toast with ID:", t);
                 toast.dismiss(t); 
               }}
               className="text-muted-foreground hover:text-foreground"
