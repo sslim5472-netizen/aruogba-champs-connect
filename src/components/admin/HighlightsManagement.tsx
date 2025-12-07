@@ -11,6 +11,12 @@ import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Simplified schema: empty string inputs will be converted to null for the database
 const highlightSchema = z.object({
@@ -247,18 +253,12 @@ export const HighlightsManagement = () => {
         )}
       </div>
 
-      {isEditing && (
-        <Card className="p-6 glass-card">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">
-                {editingHighlight ? "Edit Highlight" : "Create New Highlight"}
-              </h3>
-              <Button type="button" variant="ghost" size="sm" onClick={resetForm}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="sm:max-w-[600px] glass-card">
+          <DialogHeader>
+            <DialogTitle>{editingHighlight ? "Edit Highlight" : "Create New Highlight"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <Label htmlFor="title">Title</Label>
@@ -371,17 +371,17 @@ export const HighlightsManagement = () => {
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button type="submit" disabled={uploading}>
-                {editingHighlight ? "Update Highlight" : "Create Highlight"}
-              </Button>
+            <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={resetForm}>
                 Cancel
               </Button>
+              <Button type="submit" disabled={uploading}>
+                {editingHighlight ? "Update Highlight" : "Create Highlight"}
+              </Button>
             </div>
           </form>
-        </Card>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {highlights?.map((highlight) => (

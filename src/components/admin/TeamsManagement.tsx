@@ -5,10 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { getTeamLogo } from "@/lib/teamUtils"; // Import the new utility
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getTeamLogo } from "@/lib/teamUtils"; // Import the utility
 
 const teamSchema = z.object({
   name: z.string().trim().min(1, "Team name is required").max(100, "Team name must be less than 100 characters"),
@@ -135,18 +142,12 @@ export const TeamsManagement = () => {
         )}
       </div>
 
-      {isEditing && (
-        <Card className="p-6 glass-card">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">
-                {editingTeam ? "Edit Team" : "Create New Team"}
-              </h3>
-              <Button type="button" variant="ghost" size="sm" onClick={resetForm}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="sm:max-w-[600px] glass-card">
+          <DialogHeader>
+            <DialogTitle>{editingTeam ? "Edit Team" : "Create New Team"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="name">Team Name</Label>
@@ -191,17 +192,17 @@ export const TeamsManagement = () => {
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button type="submit">
-                {editingTeam ? "Update Team" : "Create Team"}
-              </Button>
+            <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={resetForm}>
                 Cancel
               </Button>
+              <Button type="submit">
+                {editingTeam ? "Update Team" : "Create Team"}
+              </Button>
             </div>
           </form>
-        </Card>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {teams?.map((team) => (

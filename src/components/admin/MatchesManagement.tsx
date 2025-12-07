@@ -10,6 +10,12 @@ import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { z } from "zod";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const DEFAULT_LIVE_STREAM_URL = "https://player.livepush.io/live/emqEku0-FJ7AZA7V";
 
@@ -216,18 +222,12 @@ export const MatchesManagement = () => {
         )}
       </div>
 
-      {isEditing && (
-        <Card className="p-6 glass-card">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">
-                {editingMatch ? "Edit Match" : "Create New Match"}
-              </h3>
-              <Button type="button" variant="ghost" size="sm" onClick={resetForm}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="sm:max-w-[600px] glass-card">
+          <DialogHeader>
+            <DialogTitle>{editingMatch ? "Edit Match" : "Create New Match"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="home_team">Home Team</Label>
@@ -342,17 +342,17 @@ export const MatchesManagement = () => {
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button type="submit">
-                {editingMatch ? "Update Match" : "Create Match"}
-              </Button>
+            <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={resetForm}>
                 Cancel
               </Button>
+              <Button type="submit">
+                {editingMatch ? "Update Match" : "Create Match"}
+              </Button>
             </div>
           </form>
-        </Card>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 gap-3">
         {matches?.map((match) => (
