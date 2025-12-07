@@ -3,35 +3,36 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Check, LogIn, Star } from "lucide-react"; // Added Star icon
+import { Trophy, Check, LogIn, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useAuth } from "@/hooks/useAuth"; // Import useAuth
+import { useAuth } from "@/hooks/useAuth";
+import { Card } from "@/components/ui/card"; // Import Card for team grouping
 
 const voteSchema = z.object({
   playerId: z.string().uuid('Invalid player selection'),
   matchId: z.string().uuid('Invalid match selection')
 });
 
-// Assume a standard match duration for calculating end time
-const MATCH_DURATION_MINUTES = 90;
-const VOTING_WINDOW_MINUTES = 5; // Voting opens 5 minutes before estimated end time
+const VOTING_GRACE_PERIOD_MINUTES = 10; // Voting ends 10 minutes after match status becomes 'finished'
 
 const Voting = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
-  const { user, loading: authLoading } = useAuth(); // Use useAuth hook
+  const { user, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   // Function to determine the currently votable match
   const fetchVotableMatch = useCallback(async () => {
-    const { data: liveMatches, error } = await supabase
+    const { data: matches, error } = await supabase
       .from('matches')
       .select(`
         id,
         match_date,
+        status,
+        updated_at,
         home_team_id,
         away_team_id,
         home_score,
@@ -39,25 +40,35 @@ const Voting = () => {
         home_team:teams!matches_home_team_id_fkey(name),
         away_team:teams!matches_away_team_id_fkey(name)
       `)
-      .eq('status', 'live')
-      .order('match_date', { ascending: true }); // Order by date to pick the earliest live match
+      .in('status', ['live', 'finished'])
+      .order('match_date', { ascending: true }); // Order by date to pick the earliest relevant match
 
     if (error) {
-      console.error("Error fetching live matches for voting page:", error);
+      console.error("Error fetching matches for voting page:", error);
       return null;
     }
 
     const now = new Date();
-    for (const match of liveMatches || []) {
-      const matchStartTime = new Date(match.match_date);
-      const estimatedEndTime = new Date(matchStartTime.getTime() + MATCH_DURATION_MINUTES * 60 * 1000);
-      const votingStartsAt = new Date(estimatedEndTime.getTime() - VOTING_WINDOW_MINUTES * 60 * 1000);
+    for (const match of matches || []) {
+      let isVotingOpen = false;
 
-      if (now >= votingStartsAt && now < estimatedEndTime) {
-        return match;
+      if (match.status === 'live') {
+        // For live matches, voting is open
+        isVotingOpen = true;
+      } else if (match.status === 'finished' && match.updated_at) {
+        // For finished matches, voting is open for a grace period after updated_at
+        const matchFinishedAt = new Date(match.updated_at);
+        const votingEndsAt = new Date(matchFinishedAt.getTime() + VOTING_GRACE_PERIOD_MINUTES * 60 * 1000);
+        if (now < votingEndsAt) {
+          isVotingOpen = true;
+        }
+      }
+
+      if (isVotingOpen) {
+        return match; // This match is votable
       }
     }
-    return null;
+    return null; // No votable matches found
   }, []);
 
   const { data: votableMatch, isLoading: matchLoading } = useQuery({
@@ -72,7 +83,7 @@ const Voting = () => {
     const checkUserVote = async () => {
       if (user && votableMatch) {
         const { data: existingVote } = await supabase
-          .from('match_votes') // Use match_votes table
+          .from('match_votes')
           .select('id')
           .eq('user_id', user.id)
           .eq('match_id', votableMatch.id)
@@ -92,7 +103,7 @@ const Voting = () => {
       
       const { data, error } = await supabase
         .from('players')
-        .select('*, team:teams(*)')
+        .select('*, team:teams(name, color)') // Fetch team color for styling
         .in('team_id', [votableMatch.home_team_id, votableMatch.away_team_id]);
       
       if (error) throw error;
@@ -101,12 +112,22 @@ const Voting = () => {
     enabled: !!votableMatch,
   });
 
+  // Group players by team
+  const groupedPlayers = players?.reduce((acc, player) => {
+    const teamName = player.team?.name || "Unassigned";
+    if (!acc[teamName]) {
+      acc[teamName] = [];
+    }
+    acc[teamName].push(player);
+    return acc;
+  }, {} as Record<string, typeof players>) || {};
+
+
   const { data: voteResults, isLoading: votesLoading } = useQuery({
     queryKey: ['vote-results', votableMatch?.id],
     queryFn: async () => {
       if (!votableMatch) return {};
       
-      // Query match_votes directly instead of public_votes
       const { data, error } = await supabase
         .from('match_votes')
         .select('player_id')
@@ -127,7 +148,7 @@ const Voting = () => {
 
   // Determine the leading player
   const leadingPlayerId = Object.keys(voteResults || {}).reduce((a, b) => 
-    (voteResults?.[a] || 0) > (voteResults?.[b] || 0) ? a : b, null as string | null
+    (voteResults?.[b] || 0) > (voteResults?.[a] || 0) ? a : b, null as string | null
   );
 
   const voteMutation = useMutation({
@@ -150,7 +171,7 @@ const Voting = () => {
       }
 
       const { data: existingVote } = await supabase
-        .from('match_votes') // Use match_votes table
+        .from('match_votes')
         .select('id')
         .eq('user_id', user.id)
         .eq('match_id', votableMatch.id)
@@ -161,7 +182,7 @@ const Voting = () => {
       }
       
       const { error } = await supabase
-        .from('match_votes') // Use match_votes table
+        .from('match_votes')
         .insert({
           match_id: votableMatch.id,
           player_id: playerId,
@@ -175,7 +196,7 @@ const Voting = () => {
       const { error: emailError } = await supabase.functions.invoke('send-vote-confirmation', {
         body: {
           playerName: selectedPlayerData?.name || 'Unknown Player',
-          matchDetails: `${votableMatch.home_team.name} ${votableMatch.home_score} - ${votableMatch.away_score} ${votableMatch.away_team.name}`,
+          matchDetails: `${votableMatch.home_team.name} ${votableMatch.home_score} - ${votableMatch.away_team.name}`,
         }
       });
 
@@ -216,7 +237,6 @@ const Voting = () => {
           filter: `match_id=eq.${votableMatch.id}`,
         },
         () => {
-          console.log("Realtime update: match_votes table changed, refetching vote results.");
           if (hasVoted) { // Only invalidate if user has already voted to see live updates
             queryClient.invalidateQueries({ queryKey: ['vote-results', votableMatch.id] });
           }
@@ -277,7 +297,7 @@ const Voting = () => {
             <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-2xl font-heading mb-2">No Active Voting</h2>
             <p className="text-muted-foreground">
-              Voting will be available for live matches 5 minutes before their estimated end time.
+              Voting will be available for live matches and for 10 minutes after a match finishes.
             </p>
           </div>
         </div>
@@ -313,7 +333,7 @@ const Voting = () => {
               <div className="space-y-2">
                 {players
                   ?.sort((a, b) => (voteResults?.[b.id] || 0) - (voteResults?.[a.id] || 0))
-                  .map((player) => (
+                  .map((player: any) => (
                     <div key={player.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                       <span className="font-heading flex items-center gap-2">
                         {player.name}
@@ -329,41 +349,36 @@ const Voting = () => {
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {players?.map((player) => (
-                <button
-                  key={player.id}
-                  onClick={() => setSelectedPlayer(player.id)}
-                  className={`glass-card p-6 rounded-xl text-left transition-all hover:glow-effect ${
-                    selectedPlayer === player.id ? 'ring-2 ring-primary' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div 
-                      className="w-12 h-12 rounded-lg flex items-center justify-center font-heading"
-                      style={{ 
-                        background: `linear-gradient(135deg, ${player.team.color}33, ${player.team.color}66)`,
-                        color: player.team.color
-                      }}
+            {Object.keys(groupedPlayers).sort().map((teamName) => (
+              <Card key={teamName} className="glass-card p-6 rounded-xl mb-6">
+                <h3 className="text-xl font-heading gradient-text mb-4">{teamName}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {groupedPlayers[teamName]?.map((player: any) => (
+                    <Button
+                      key={player.id}
+                      onClick={() => setSelectedPlayer(player.id)}
+                      variant={selectedPlayer === player.id ? "default" : "outline"}
+                      className={`w-full justify-start ${selectedPlayer === player.id ? 'bg-gradient-to-r from-primary to-accent text-white' : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'}`}
+                      disabled={voteMutation.isPending}
                     >
-                      {player.jersey_number}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <h3 className="font-heading text-lg">{player.name}</h3>
-                      <p className="text-sm text-muted-foreground">{player.team.name}</p>
-                      <p className="text-xs text-muted-foreground">{player.position}</p>
-                    </div>
-                    
-                    {selectedPlayer === player.id && (
-                      <Check className="w-6 h-6 text-primary" />
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center font-heading text-sm mr-3"
+                        style={{ 
+                          background: `linear-gradient(135deg, ${player.team.color}33, ${player.team.color}66)`,
+                          color: player.team.color
+                        }}
+                      >
+                        {player.jersey_number}
+                      </div>
+                      {player.name}
+                      {selectedPlayer === player.id && <Check className="w-4 h-4 ml-auto" />}
+                    </Button>
+                  ))}
+                </div>
+              </Card>
+            ))}
 
-            <div className="text-center">
+            <div className="text-center mt-8">
               <Button
                 onClick={handleVote}
                 disabled={!selectedPlayer || voteMutation.isPending || !user}
