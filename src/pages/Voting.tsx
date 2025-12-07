@@ -89,11 +89,13 @@ const Voting = () => {
           .eq('match_id', votableMatch.id)
           .maybeSingle(); // Use maybeSingle to avoid 406 errors if no vote exists
         
-        if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found, which is expected
+        if (error) { // If maybeSingle returns an error, it's a real error
           console.error("Error checking for existing vote:", error);
           // Optionally, toast.error("Failed to check your previous votes.");
+          setHasVoted(false); // Assume no vote if there's an error fetching
+        } else {
+          setHasVoted(!!existingVote);
         }
-        setHasVoted(!!existingVote);
       } else {
         setHasVoted(false);
       }
@@ -183,11 +185,11 @@ const Voting = () => {
         .eq('match_id', votableMatch.id)
         .maybeSingle(); // Use maybeSingle here too
       
-      if (checkError && checkError.code !== 'PGRST116') {
+      if (checkError) { // If maybeSingle returns an error, it's a real error
         console.error("Error re-checking for existing vote:", checkError);
         throw new Error("Failed to verify your voting status. Please try again.");
       }
-      if (existingVote) {
+      if (existingVote) { // If data is not null, a vote exists
         throw new Error('You have already voted for this match.');
       }
       
