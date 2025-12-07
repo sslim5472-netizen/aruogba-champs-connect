@@ -14,9 +14,7 @@ const voteSchema = z.object({
   matchId: z.string().uuid('Invalid match selection')
 });
 
-// Assume a standard match duration for calculating end time
-const MATCH_DURATION_MINUTES = 90;
-const VOTING_WINDOW_MINUTES = 5; // Voting opens 5 minutes before estimated end time
+const VOTING_GRACE_PERIOD_MINUTES = 10; // Voting ends 10 minutes after match status becomes 'finished'
 
 const Voting = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -27,11 +25,13 @@ const Voting = () => {
 
   // Function to determine the currently votable match
   const fetchVotableMatch = useCallback(async () => {
-    const { data: liveMatches, error } = await supabase
+    const { data: matches, error } = await supabase
       .from('matches')
       .select(`
         id,
         match_date,
+        status,
+        updated_at,
         home_team_id,
         away_team_id,
         home_score,
@@ -39,25 +39,35 @@ const Voting = () => {
         home_team:teams!matches_home_team_id_fkey(name),
         away_team:teams!matches_away_team_id_fkey(name)
       `)
-      .eq('status', 'live')
-      .order('match_date', { ascending: true }); // Order by date to pick the earliest live match
+      .in('status', ['live', 'finished'])
+      .order('match_date', { ascending: true }); // Order by date to pick the earliest relevant match
 
     if (error) {
-      console.error("Error fetching live matches for voting page:", error);
+      console.error("Error fetching matches for voting page:", error);
       return null;
     }
 
     const now = new Date();
-    for (const match of liveMatches || []) {
-      const matchStartTime = new Date(match.match_date);
-      const estimatedEndTime = new Date(matchStartTime.getTime() + MATCH_DURATION_MINUTES * 60 * 1000);
-      const votingStartsAt = new Date(estimatedEndTime.getTime() - VOTING_WINDOW_MINUTES * 60 * 1000);
+    for (const match of matches || []) {
+      let isVotingOpen = false;
 
-      if (now >= votingStartsAt && now < estimatedEndTime) {
-        return match;
+      if (match.status === 'live') {
+        // For live matches, voting is open
+        isVotingOpen = true;
+      } else if (match.status === 'finished' && match.updated_at) {
+        // For finished matches, voting is open for a grace period after updated_at
+        const matchFinishedAt = new Date(match.updated_at);
+        const votingEndsAt = new Date(matchFinishedAt.getTime() + VOTING_GRACE_PERIOD_MINUTES * 60 * 1000);
+        if (now < votingEndsAt) {
+          isVotingOpen = true;
+        }
+      }
+
+      if (isVotingOpen) {
+        return match; // This match is votable
       }
     }
-    return null;
+    return null; // No votable matches found
   }, []);
 
   const { data: votableMatch, isLoading: matchLoading } = useQuery({
@@ -72,7 +82,7 @@ const Voting = () => {
     const checkUserVote = async () => {
       if (user && votableMatch) {
         const { data: existingVote } = await supabase
-          .from('match_votes') // Use match_votes table
+          .from('match_votes')
           .select('id')
           .eq('user_id', user.id)
           .eq('match_id', votableMatch.id)
@@ -106,7 +116,6 @@ const Voting = () => {
     queryFn: async () => {
       if (!votableMatch) return {};
       
-      // Query match_votes directly instead of public_votes
       const { data, error } = await supabase
         .from('match_votes')
         .select('player_id')
@@ -150,7 +159,7 @@ const Voting = () => {
       }
 
       const { data: existingVote } = await supabase
-        .from('match_votes') // Use match_votes table
+        .from('match_votes')
         .select('id')
         .eq('user_id', user.id)
         .eq('match_id', votableMatch.id)
@@ -161,7 +170,7 @@ const Voting = () => {
       }
       
       const { error } = await supabase
-        .from('match_votes') // Use match_votes table
+        .from('match_votes')
         .insert({
           match_id: votableMatch.id,
           player_id: playerId,
@@ -276,7 +285,7 @@ const Voting = () => {
             <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-2xl font-heading mb-2">No Active Voting</h2>
             <p className="text-muted-foreground">
-              Voting will be available for live matches 5 minutes before their estimated end time.
+              Voting will be available for live matches and for 10 minutes after a match finishes.
             </p>
           </div>
         </div>

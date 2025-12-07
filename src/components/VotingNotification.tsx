@@ -12,7 +12,7 @@ import { z } from "zod";
 
 // Assume a standard match duration for calculating end time
 const MATCH_DURATION_MINUTES = 90;
-const VOTING_WINDOW_MINUTES = 5; // Voting opens 5 minutes before estimated end time
+const VOTING_GRACE_PERIOD_MINUTES = 10; // Voting ends 10 minutes after match status becomes 'finished'
 
 const voteSchema = z.object({
   playerId: z.string().uuid('Invalid player selection'),
@@ -27,11 +27,13 @@ const VotingNotification = () => {
   const [activeToastId, setActiveToastId] = useState<string | number | null>(null);
 
   const fetchVotableMatch = useCallback(async () => {
-    const { data: liveMatches, error } = await supabase
+    const { data: matches, error } = await supabase
       .from('matches')
       .select(`
         id,
         match_date,
+        status,
+        updated_at,
         home_team_id,
         away_team_id,
         home_score,
@@ -39,38 +41,48 @@ const VotingNotification = () => {
         home_team:teams!matches_home_team_id_fkey(name),
         away_team:teams!matches_away_team_id_fkey(name)
       `)
-      .eq('status', 'live')
-      .order('match_date', { ascending: true }); // Order by date to pick the earliest live match
+      .in('status', ['live', 'finished'])
+      .order('match_date', { ascending: true }); // Order by date to pick the earliest relevant match
 
     if (error) {
-      console.error("Error fetching live matches for voting notification:", error);
+      console.error("Error fetching matches for voting notification:", error);
       return null;
     }
 
     const now = new Date();
-    for (const match of liveMatches || []) {
-      const matchStartTime = new Date(match.match_date);
-      const estimatedEndTime = new Date(matchStartTime.getTime() + MATCH_DURATION_MINUTES * 60 * 1000);
-      const votingStartsAt = new Date(estimatedEndTime.getTime() - VOTING_WINDOW_MINUTES * 60 * 1000);
+    for (const match of matches || []) {
+      let isVotingOpen = false;
 
-      if (now >= votingStartsAt && now < estimatedEndTime) {
+      if (match.status === 'live') {
+        // For live matches, voting is open
+        isVotingOpen = true;
+      } else if (match.status === 'finished' && match.updated_at) {
+        // For finished matches, voting is open for a grace period after updated_at
+        const matchFinishedAt = new Date(match.updated_at);
+        const votingEndsAt = new Date(matchFinishedAt.getTime() + VOTING_GRACE_PERIOD_MINUTES * 60 * 1000);
+        if (now < votingEndsAt) {
+          isVotingOpen = true;
+        }
+      }
+
+      if (isVotingOpen) {
         // Check if user has already voted for this match
         if (user) {
           const { data: existingVote } = await supabase
-            .from('match_votes') // Use match_votes table
+            .from('match_votes')
             .select('id')
             .eq('user_id', user.id)
             .eq('match_id', match.id)
             .single();
           
           if (existingVote) {
-            return null; // User already voted for this match, don't show notification
+            continue; // User already voted for this match, check next match
           }
         }
-        return match;
+        return match; // This match is votable and user hasn't voted
       }
     }
-    return null;
+    return null; // No votable matches found
   }, [user]);
 
   const { data: votableMatch, isLoading: matchLoading } = useQuery({
@@ -109,7 +121,7 @@ const VotingNotification = () => {
       }
 
       const { error } = await supabase
-        .from('match_votes') // Use match_votes table
+        .from('match_votes')
         .insert({
           match_id: matchId,
           player_id: playerId,
