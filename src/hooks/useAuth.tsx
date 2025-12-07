@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -39,6 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [firstName, setFirstName] = useState<string | null>(null);
   const [lastName, setLastName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const isSigningOutRef = useRef(false); // Use a ref to persist across renders without causing re-renders
 
   const fetchUserProfile = async (userId: string) => {
     const { data: profileData, error: profileError } = await supabase
@@ -154,6 +155,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    if (isSigningOutRef.current) {
+      console.log("Sign out already in progress, ignoring redundant call.");
+      return;
+    }
+    isSigningOutRef.current = true; // Set flag immediately
+
     console.log("Initiating sign out process...");
     setLoading(true);
     
@@ -168,14 +175,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("Successfully signed out from Supabase. Initiating page reload...");
         toast.success("Successfully logged out!");
         // Perform a full page reload to ensure all state is reset cleanly
+        // This will cause the entire app to re-initialize, including the AuthProvider
+        // and thus reset isSigningOutRef.current to false.
         window.location.assign('/');
       }
     } catch (err: any) {
       console.error("Unexpected error during sign out:", err);
       toast.error("An unexpected error occurred during logout.");
     } finally {
-      // These state resets are mostly for immediate UI feedback before the reload,
-      // but the reload will ultimately reset everything.
+      // If for some reason window.location.assign doesn't happen (e.g., error before it),
+      // we need to reset the flag to allow future sign-out attempts.
+      // This check is a safeguard, as a successful window.location.assign will reset the entire app state.
+      if (isSigningOutRef.current) {
+         isSigningOutRef.current = false;
+      }
       setUser(null);
       setSession(null);
       setUserRole(null);
