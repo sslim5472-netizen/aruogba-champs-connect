@@ -61,70 +61,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const fetchUserMetadata = async (session: Session) => {
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role, team_id')
+      .eq('user_id', session.user.id)
+      .single<{ role: string; team_id: string | null } | null>();
+    
+    if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
+        console.error("Error fetching user role:", roleError);
+    }
+
+    if (roleData) {
+      setUserRole(roleData.role);
+      setTeamId(roleData.team_id);
+    } else {
+      setUserRole(null);
+      setTeamId(null);
+    }
+    await fetchUserProfile(session.user.id);
+  };
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        console.log("Auth state change event:", _event, "Session:", session); // Debug log
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const { data: roleData, error: roleError } = await supabase
-            .from('user_roles')
-            .select('role, team_id')
-            .eq('user_id', session.user.id)
-            .single<{ role: string; team_id: string | null } | null>();
-          
-          if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
-             console.error("Error fetching user role:", roleError);
-          }
-
-          if (roleData) {
-            setUserRole(roleData.role);
-            setTeamId(roleData.team_id);
-          } else {
-            setUserRole(null);
-            setTeamId(null);
-          }
-          await fetchUserProfile(session.user.id);
-        } else {
-          // Explicitly clear all user-related state on SIGNED_OUT or no session
-          setUserRole(null);
-          setTeamId(null);
-          setFirstName(null);
-          setLastName(null);
-        }
-        setLoading(false);
-      }
-    );
-
+    // 1. Handle initial session load
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log("Initial session check:", session); // Debug log
+      console.log("Initial session check:", session);
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role, team_id')
-          .eq('user_id', session.user.id)
-          .single<{ role: string; team_id: string | null } | null>();
-        
-         if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
-             console.error("Error fetching user role on init:", roleError);
-          }
-
-        if (roleData) {
-          setUserRole(roleData.role);
-          setTeamId(roleData.team_id);
-        }
-        await fetchUserProfile(session.user.id);
+        await fetchUserMetadata(session);
       }
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    // 2. Set up real-time auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state change event:", event, "Session:", session);
+        
+        if (event === 'SIGNED_OUT' || !session) {
+          // Explicitly clear all user-related state on SIGNED_OUT
+          setUser(null);
+          setSession(null);
+          setUserRole(null);
+          setTeamId(null);
+          setFirstName(null);
+          setLastName(null);
+          setLoading(false);
+        } else if (session?.user) {
+          setSession(session);
+          setUser(session.user);
+          await fetchUserMetadata(session);
+          setLoading(false);
+        }
+      }
+    );
+
+    // Cleanup function: Unsubscribe the listener when the component unmounts
+    return () => {
+      console.log("Unsubscribing auth listener.");
+      subscription.unsubscribe();
+    };
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
@@ -159,7 +158,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("Sign out already in progress, ignoring redundant call.");
       return;
     }
-    isSigningOutRef.current = true; // Set flag immediately
+    isSigningOutRef.current = true;
 
     console.log("Initiating sign out process...");
     setLoading(true);
@@ -175,28 +174,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("Successfully signed out from Supabase. Initiating page reload...");
         toast.success("Successfully logged out!");
         // Perform a full page reload to ensure all state is reset cleanly
-        // This will cause the entire app to re-initialize, including the AuthProvider
-        // and thus reset isSigningOutRef.current to false.
         window.location.assign('/');
       }
     } catch (err: any) {
       console.error("Unexpected error during sign out:", err);
       toast.error("An unexpected error occurred during logout.");
     } finally {
-      // If for some reason window.location.assign doesn't happen (e.g., error before it),
-      // we need to reset the flag to allow future sign-out attempts.
-      // This check is a safeguard, as a successful window.location.assign will reset the entire app state.
-      if (isSigningOutRef.current) {
-         isSigningOutRef.current = false;
-      }
-      setUser(null);
-      setSession(null);
-      setUserRole(null);
-      setTeamId(null);
-      setFirstName(null);
-      setLastName(null);
+      // Reset flag if reload fails or is prevented
+      isSigningOutRef.current = false;
       setLoading(false);
-      console.log("Sign out process finalized in hook (before potential reload).");
     }
   };
 
