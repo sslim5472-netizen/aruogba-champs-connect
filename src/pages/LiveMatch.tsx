@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { Clock, Target, AlertTriangle, Trophy, Video } from "lucide-react";
@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 const LiveMatch = () => {
   const navigate = useNavigate();
   const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
+  const queryClient = useQueryClient(); // Initialize queryClient
 
   const { data: liveMatch, refetch } = useQuery({
     queryKey: ['live-match', liveMatchId],
@@ -66,7 +67,10 @@ const LiveMatch = () => {
           table: 'matches',
           filter: 'status=eq.live',
         },
-        () => refetch()
+        () => {
+          console.log("Realtime update: matches table changed, refetching live match.");
+          queryClient.invalidateQueries({ queryKey: ['live-match'] });
+        }
       )
       .on(
         'postgres_changes',
@@ -74,15 +78,19 @@ const LiveMatch = () => {
           event: '*',
           schema: 'public',
           table: 'match_events',
+          filter: `match_id=eq.${liveMatchId}`, // Filter events for the current live match
         },
-        () => refetch()
+        () => {
+          console.log("Realtime update: match_events table changed, refetching match events.");
+          queryClient.invalidateQueries({ queryKey: ['match-events', liveMatchId] });
+        }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetch]);
+  }, [queryClient, liveMatchId]); // Added queryClient and liveMatchId to dependency array
 
   if (!liveMatch) {
     return (
