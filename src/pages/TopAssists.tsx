@@ -61,6 +61,8 @@ const TopAssists = () => {
           <div className="glass-card p-6 rounded-xl">
             {loading ? (
               <div className="text-center text-muted-foreground py-12">Loading...</div>
+            ) : topAssists.length === 0 ? (
+              <div className="text-center text-muted-foreground py-12">No top assists available yet.</div>
             ) : (
               <div className="space-y-3">
                 {topAssists.map((player, index) => (

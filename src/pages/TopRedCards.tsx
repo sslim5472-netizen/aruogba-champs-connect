@@ -61,6 +61,8 @@ const TopRedCards = () => {
           <div className="glass-card p-6 rounded-xl">
             {loading ? (
               <div className="text-center text-muted-foreground py-12">Loading...</div>
+            ) : topRedCards.length === 0 ? (
+              <div className="text-center text-muted-foreground py-12">No top red cards available yet.</div>
             ) : (
               <div className="space-y-3">
                 {topRedCards.map((player, index) => (
