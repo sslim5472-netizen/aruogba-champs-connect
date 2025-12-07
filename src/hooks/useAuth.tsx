@@ -69,24 +69,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          const { data: roleData, error: roleError } = await supabase
-            .from('user_roles')
-            .select('role, team_id')
-            .eq('user_id', session.user.id)
-            .single<{ role: string; team_id: string | null } | null>();
-          
-          if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
-             console.error("Error fetching user role:", roleError);
-          }
+          try {
+            const { data: roleData, error: roleError } = await supabase
+              .from('user_roles')
+              .select('role, team_id')
+              .eq('user_id', session.user.id)
+              .single<{ role: string; team_id: string | null } | null>();
+            
+            if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
+               console.error("Error fetching user role on auth state change:", roleError);
+            }
 
-          if (roleData) {
-            setUserRole(roleData.role);
-            setTeamId(roleData.team_id);
-          } else {
+            if (roleData) {
+              setUserRole(roleData.role);
+              setTeamId(roleData.team_id);
+            } else {
+              setUserRole(null);
+              setTeamId(null);
+            }
+            await fetchUserProfile(session.user.id);
+          } catch (error) {
+            console.error("Error during auth state change user data fetch:", error);
+            // Ensure state is cleared even on error
             setUserRole(null);
             setTeamId(null);
+            setFirstName(null);
+            setLastName(null);
           }
-          await fetchUserProfile(session.user.id);
         } else {
           // Explicitly clear all user-related state on SIGNED_OUT or no session
           setUserRole(null);
@@ -94,34 +103,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setFirstName(null);
           setLastName(null);
         }
-        setLoading(false);
+        setLoading(false); // This should always run after the event processing
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log("Initial session check:", session); // Debug log
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role, team_id')
-          .eq('user_id', session.user.id)
-          .single<{ role: string; team_id: string | null } | null>();
-        
-         if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
-             console.error("Error fetching user role on init:", roleError);
-          }
+    const loadInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error getting initial session:", error);
+          // If there's an error getting session, clear any local state
+          setSession(null);
+          setUser(null);
+          setUserRole(null);
+          setTeamId(null);
+          setFirstName(null);
+          setLastName(null);
+        } else {
+          console.log("Initial session check:", session); // Debug log
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            try {
+              const { data: roleData, error: roleError } = await supabase
+                .from('user_roles')
+                .select('role, team_id')
+                .eq('user_id', session.user.id)
+                .single<{ role: string; team_id: string | null } | null>();
+              
+              if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
+                 console.error("Error fetching user role on initial session:", roleError);
+              }
 
-        if (roleData) {
-          setUserRole(roleData.role);
-          setTeamId(roleData.team_id);
+              if (roleData) {
+                setUserRole(roleData.role);
+                setTeamId(roleData.team_id);
+              }
+              await fetchUserProfile(session.user.id);
+            } catch (error) {
+              console.error("Error during initial session user data fetch:", error);
+              // Ensure state is cleared even on error
+              setUserRole(null);
+              setTeamId(null);
+              setFirstName(null);
+              setLastName(null);
+            }
+          }
         }
-        await fetchUserProfile(session.user.id);
+      } catch (error) {
+        console.error("Unexpected error in loadInitialSession:", error);
+        // Catch any synchronous errors from supabase.auth.getSession() or subsequent sync code
+        setSession(null);
+        setUser(null);
+        setUserRole(null);
+        setTeamId(null);
+        setFirstName(null);
+        setLastName(null);
+      } finally {
+        setLoading(false); // ALWAYS set loading to false
       }
-      setLoading(false);
-    });
+    };
+
+    loadInitialSession();
 
     return () => subscription.unsubscribe();
   }, []);
