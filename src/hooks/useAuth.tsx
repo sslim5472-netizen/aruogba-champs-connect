@@ -42,11 +42,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isSigningOutRef = useRef(false); // Use a ref to persist across renders without causing re-renders
 
   const fetchUserProfile = async (userId: string) => {
+    // Changed .single() to .maybeSingle()
     const { data: profileData, error: profileError } = await supabase
-      .from('profiles' as any) // Type assertion to fix TS error
+      .from('profiles' as any)
       .select('first_name, last_name')
       .eq('id', userId)
-      .single<{ first_name: string | null; last_name: string | null } | null>();
+      .maybeSingle<{ first_name: string | null; last_name: string | null } | null>();
 
     if (profileError) {
       console.error("Error fetching profile:", profileError);
@@ -70,13 +71,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (session?.user) {
           try {
+            // Changed .single() to .maybeSingle()
             const { data: roleData, error: roleError } = await supabase
               .from('user_roles')
               .select('role, team_id')
               .eq('user_id', session.user.id)
-              .single<{ role: string; team_id: string | null } | null>();
+              .maybeSingle<{ role: string; team_id: string | null } | null>();
             
-            if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
+            if (roleError) { // No need to check for PGRST116 with maybeSingle()
                console.error("Error fetching user role on auth state change:", roleError);
             }
 
@@ -126,13 +128,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           if (session?.user) {
             try {
+              // Changed .single() to .maybeSingle()
               const { data: roleData, error: roleError } = await supabase
                 .from('user_roles')
                 .select('role, team_id')
                 .eq('user_id', session.user.id)
-                .single<{ role: string; team_id: string | null } | null>();
+                .maybeSingle<{ role: string; team_id: string | null } | null>();
               
-              if (roleError && roleError.code !== 'PGRST116') { // PGRST116 means no rows found
+              if (roleError) { // No need to check for PGRST116 with maybeSingle()
                  console.error("Error fetching user role on initial session:", roleError);
               }
 
