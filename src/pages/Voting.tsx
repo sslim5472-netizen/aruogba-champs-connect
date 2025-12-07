@@ -82,12 +82,17 @@ const Voting = () => {
   useEffect(() => {
     const checkUserVote = async () => {
       if (user && votableMatch) {
-        const { data: existingVote } = await supabase
+        const { data: existingVote, error } = await supabase // Added error handling
           .from('match_votes')
           .select('id')
           .eq('user_id', user.id)
           .eq('match_id', votableMatch.id)
           .single();
+        
+        if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found, which is expected
+          console.error("Error checking for existing vote:", error);
+          // Optionally, toast.error("Failed to check your previous votes.");
+        }
         setHasVoted(!!existingVote);
       } else {
         setHasVoted(false);
@@ -170,13 +175,18 @@ const Voting = () => {
         throw new Error(result.error.errors[0].message);
       }
 
-      const { data: existingVote } = await supabase
+      // Re-check for existing vote right before insertion to prevent race conditions
+      const { data: existingVote, error: checkError } = await supabase
         .from('match_votes')
         .select('id')
         .eq('user_id', user.id)
         .eq('match_id', votableMatch.id)
         .single();
 
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error("Error re-checking for existing vote:", checkError);
+        throw new Error("Failed to verify your voting status. Please try again.");
+      }
       if (existingVote) {
         throw new Error('You have already voted for this match.');
       }
@@ -208,7 +218,7 @@ const Voting = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vote-results', votableMatch?.id] });
-      setHasVoted(true);
+      setHasVoted(true); // Set hasVoted to true on successful vote
       toast.success('Vote submitted successfully! Check your email for confirmation.');
     },
     onError: (error: any) => {
@@ -359,7 +369,7 @@ const Voting = () => {
                       onClick={() => setSelectedPlayer(player.id)}
                       variant={selectedPlayer === player.id ? "default" : "outline"}
                       className={`w-full justify-start ${selectedPlayer === player.id ? 'bg-gradient-to-r from-primary to-accent text-white' : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'}`}
-                      disabled={voteMutation.isPending}
+                      disabled={voteMutation.isPending || hasVoted} {/* Disable if already voted */}
                     >
                       <div 
                         className="w-8 h-8 rounded-full flex items-center justify-center font-heading text-sm mr-3"
@@ -381,7 +391,7 @@ const Voting = () => {
             <div className="text-center mt-8">
               <Button
                 onClick={handleVote}
-                disabled={!selectedPlayer || voteMutation.isPending || !user}
+                disabled={!selectedPlayer || voteMutation.isPending || !user || hasVoted} {/* Disable if already voted */}
                 className="bg-gradient-to-r from-primary to-accent hover:opacity-90 px-12 py-6 text-lg"
               >
                 {voteMutation.isPending ? 'Submitting...' : 'Submit Vote'}
