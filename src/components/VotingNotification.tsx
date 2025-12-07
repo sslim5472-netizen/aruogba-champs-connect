@@ -19,6 +19,7 @@ const VotingNotification = () => {
   const [activeToastId, setActiveToastId] = useState<string | number | null>(null);
 
   const fetchVotableMatch = useCallback(async () => {
+    console.log("fetchVotableMatch: Starting fetch for votable matches...");
     const { data: matches, error } = await supabase
       .from('matches')
       .select(`
@@ -33,9 +34,11 @@ const VotingNotification = () => {
       .order('match_date', { ascending: true });
 
     if (error) {
-      console.error("Error fetching matches for voting notification:", error);
+      console.error("fetchVotableMatch: Error fetching matches:", error);
       return null;
     }
+
+    console.log("fetchVotableMatch: Fetched matches:", matches);
 
     const now = new Date();
     for (const match of matches || []) {
@@ -43,16 +46,19 @@ const VotingNotification = () => {
 
       if (match.status === 'live') {
         isVotingOpen = true;
+        console.log(`fetchVotableMatch: Match ${match.id} is LIVE, voting is open.`);
       } else if (match.status === 'finished' && match.updated_at) {
         const matchFinishedAt = new Date(match.updated_at);
         const votingEndsAt = new Date(matchFinishedAt.getTime() + VOTING_GRACE_PERIOD_MINUTES * 60 * 1000);
         if (now < votingEndsAt) {
           isVotingOpen = true;
+          console.log(`fetchVotableMatch: Match ${match.id} is FINISHED, but within grace period. Voting ends at ${votingEndsAt.toISOString()}.`);
+        } else {
+          console.log(`fetchVotableMatch: Match ${match.id} is FINISHED, grace period ended at ${votingEndsAt.toISOString()}. Voting closed.`);
         }
       }
 
       if (isVotingOpen) {
-        // Check if user has already voted for this match
         if (user) {
           const { data: existingVote } = await supabase
             .from('match_votes')
@@ -62,12 +68,17 @@ const VotingNotification = () => {
             .single();
           
           if (existingVote) {
+            console.log(`fetchVotableMatch: User ${user.id} already voted for match ${match.id}. Skipping.`);
             continue; // User already voted for this match, check next match
           }
+        } else {
+          console.log(`fetchVotableMatch: User not logged in, but match ${match.id} is votable.`);
         }
+        console.log(`fetchVotableMatch: Found votable match: ${match.id}`);
         return match; // This match is votable and user hasn't voted
       }
     }
+    console.log("fetchVotableMatch: No votable matches found after checking all conditions.");
     return null; // No votable matches found
   }, [user]);
 
@@ -79,9 +90,13 @@ const VotingNotification = () => {
   });
 
   useEffect(() => {
+    console.log("VotingNotification useEffect: Checking conditions for toast display.");
+    console.log(`  authLoading: ${authLoading}, matchLoading: ${matchLoading}, votableMatch: ${!!votableMatch}, location.pathname: ${location.pathname}, activeToastId: ${activeToastId}`);
+
     if (!authLoading && !matchLoading && votableMatch && location.pathname !== '/voting' && !activeToastId) {
+      console.log("VotingNotification useEffect: All conditions met. Attempting to show toast.");
       const id = toast.custom((t) => {
-        console.log("Toast created with ID:", t); // Debug log
+        console.log("Toast created with ID:", t);
         return (
           <div className="glass-card p-6 rounded-xl shadow-lg w-full max-w-md mx-auto flex flex-col items-center text-center">
             <Trophy className="w-12 h-12 text-gold mb-4 animate-bounce" />
@@ -95,7 +110,7 @@ const VotingNotification = () => {
             
             <Button
               onClick={() => {
-                console.log("Go to Voting Page button clicked. Dismissing toast and navigating."); // Debug log
+                console.log("Go to Voting Page button clicked. Dismissing toast and navigating.");
                 toast.dismiss(t); 
                 navigate('/voting');
               }}
@@ -107,12 +122,8 @@ const VotingNotification = () => {
             <Button 
               variant="ghost" 
               onClick={() => {
-                console.log("Close button clicked. Dismissing toast with ID:", activeToastId); // Debug log
-                if (activeToastId) {
-                  toast.dismiss(activeToastId); 
-                } else {
-                  toast.dismiss(t); // Fallback if activeToastId isn't set yet
-                }
+                console.log("Close button clicked. Dismissing toast with ID:", t); // Use 't' directly
+                toast.dismiss(t); 
               }}
               className="text-muted-foreground hover:text-foreground"
             >
@@ -122,22 +133,24 @@ const VotingNotification = () => {
           </div>
         );
       }, {
-        duration: Infinity, // Keep toast open until dismissed or voted
+        duration: Infinity,
         position: 'bottom-right',
         onAutoClose: () => {
-          console.log("Toast auto-closed. Clearing activeToastId."); // Debug log
+          console.log("Toast auto-closed. Clearing activeToastId.");
           setActiveToastId(null);
         },
         onDismiss: () => {
-          console.log("Toast dismissed. Clearing activeToastId."); // Debug log
+          console.log("Toast dismissed. Clearing activeToastId.");
           setActiveToastId(null);
         },
       });
       setActiveToastId(id);
     } else if ((!votableMatch || location.pathname === '/voting') && activeToastId) {
-      console.log("Dismissing toast due to no votable match or navigation to voting page. ID:", activeToastId); // Debug log
+      console.log("VotingNotification useEffect: Conditions not met for showing toast, or navigating to voting page. Dismissing existing toast if any. ID:", activeToastId);
       toast.dismiss(activeToastId);
       setActiveToastId(null);
+    } else {
+      console.log("VotingNotification useEffect: No toast action taken.");
     }
   }, [votableMatch, authLoading, matchLoading, location.pathname, activeToastId, navigate, user, queryClient]);
 
@@ -145,7 +158,7 @@ const VotingNotification = () => {
   useEffect(() => {
     return () => {
       if (activeToastId) {
-        console.log("Component unmounting. Dismissing active toast with ID:", activeToastId); // Debug log
+        console.log("Component unmounting. Dismissing active toast with ID:", activeToastId);
         toast.dismiss(activeToastId);
       }
     };
