@@ -9,10 +9,12 @@ import starsLogo from "@/assets/stars-fc.jpg";
 import spartaLogo from "@/assets/sparta-fc.jpg";
 import kingsLogo from "@/assets/kings-fc.jpg";
 import enjoymentLogo from "@/assets/enjoyment-fc.jpg";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const Fixtures = () => {
   const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const getTeamLogo = (teamName: string) => {
     const logoMap: { [key: string]: string } = {
@@ -46,6 +48,16 @@ const Fixtures = () => {
     fetchMatches();
   }, []);
 
+  const handleMatchClick = (match: any) => {
+    if (match.status === 'live') {
+      navigate('/live'); // Redirect to the live page
+    }
+    // Optionally, you could navigate to a match detail page for scheduled/finished matches
+    // else {
+    //   navigate(`/matches/${match.id}`); 
+    // }
+  };
+
   return (
     <div className="min-h-screen">
       <Navigation />
@@ -65,9 +77,13 @@ const Fixtures = () => {
         ) : matches.length === 0 ? (
           <div className="text-center text-muted-foreground">No matches scheduled yet</div>
         ) : (
-          <div>
+          <div className="space-y-4"> {/* Added space-y-4 for consistent spacing */}
           {matches.map((match, index) => (
-            <div key={index} className="glass-card p-6 rounded-xl hover:glow-effect transition-all">
+            <div 
+              key={index} 
+              className="glass-card p-6 rounded-xl hover:glow-effect transition-all cursor-pointer" // Added cursor-pointer
+              onClick={() => handleMatchClick(match)} // Added onClick handler
+            >
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="bg-gradient-to-br from-primary to-accent p-3 rounded-lg">
@@ -114,6 +130,11 @@ const Fixtures = () => {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4" />
                   <span>{match.venue || "Main Pitch"}</span>
+                  {match.status === 'live' && (
+                    <span className="ml-2 px-2 py-1 rounded text-xs bg-red-500/20 text-red-300 animate-pulse">
+                      LIVE
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
