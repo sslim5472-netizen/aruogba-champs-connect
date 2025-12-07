@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'; // Updated to 2.45.0
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -12,7 +12,6 @@ const corsHeaders = {
 interface VoteConfirmationRequest {
   playerName: string;
   matchDetails: string;
-  // userEmail: string; // This is not used in the function, user.email is used.
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -21,30 +20,37 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Get authorization header
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       console.error('Error: Missing authorization header');
       throw new Error('Missing authorization header');
     }
 
-    // Create Supabase client with user's JWT
-    const supabaseClient = createClient(
+    const token = authHeader.replace('Bearer ', '');
+    if (!token) {
+      console.error('Error: Missing JWT token after Bearer removal');
+      throw new Error('Missing JWT token');
+    }
+
+    // Create a Supabase client with the SERVICE_ROLE_KEY for server-side operations
+    // This client will be used to verify the user's JWT
+    const supabaseServiceRoleClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', // Use service role key
       {
-        global: {
-          headers: { Authorization: authHeader },
+        auth: {
+          persistSession: false, // Important for server-side functions
         },
       }
     );
 
-    // Verify user is authenticated and get user details
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Verify the user's JWT using the service role client
+    // This will return the user object if the token is valid
+    const { data: { user }, error: userError } = await supabaseServiceRoleClient.auth.getUser(token);
     
     if (userError || !user) {
-      console.error('Auth error:', userError?.message || 'User not found');
-      throw new Error('Unauthorized');
+      console.error('Auth error during getUser:', userError?.message || 'User not found');
+      throw new Error('Unauthorized: Invalid or expired token');
     }
 
     // Check if email is verified
