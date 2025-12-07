@@ -98,10 +98,11 @@ const Stats = () => {
         .order("red_cards", { ascending: false })
         .limit(5);
 
-      if (scorers) setTopScorers(scorers as PlayerStat[]);
-      if (assists) setTopAssists(assists as PlayerStat[]);
-      if (yellowCards) setTopYellowCards(yellowCards as PlayerStat[]);
-      if (redCards) setTopRedCards(redCards as PlayerStat[]);
+      // Filter out players with 0 stats before setting state
+      if (scorers) setTopScorers(scorers.filter(p => p.goals > 0) as PlayerStat[]);
+      if (assists) setTopAssists(assists.filter(p => p.assists > 0) as PlayerStat[]);
+      if (yellowCards) setTopYellowCards(yellowCards.filter(p => p.yellow_cards > 0) as PlayerStat[]);
+      if (redCards) setTopRedCards(redCards.filter(p => p.red_cards > 0) as PlayerStat[]);
       setLoadingStats(false);
     };
 
@@ -210,6 +211,8 @@ const Stats = () => {
             
             {loading ? (
               <div className="text-center text-muted-foreground">Loading...</div>
+            ) : topScorers.length === 0 ? (
+              <div className="text-center text-muted-foreground">No top scorers available yet.</div>
             ) : (
               <div className="space-y-3">
                 {topScorers.map((player, index) => (
@@ -251,6 +254,8 @@ const Stats = () => {
             
             {loading ? (
               <div className="text-center text-muted-foreground">Loading...</div>
+            ) : topAssists.length === 0 ? (
+              <div className="text-center text-muted-foreground">No top assists available yet.</div>
             ) : (
               <div className="space-y-3">
                 {topAssists.map((player, index) => (
@@ -292,6 +297,8 @@ const Stats = () => {
             
             {loading ? (
               <div className="text-center text-muted-foreground">Loading...</div>
+            ) : topYellowCards.length === 0 ? (
+              <div className="text-center text-muted-foreground">No top yellow cards available yet.</div>
             ) : (
               <div className="space-y-3">
                 {topYellowCards.map((player, index) => (
@@ -333,6 +340,8 @@ const Stats = () => {
             
             {loading ? (
               <div className="text-center text-muted-foreground">Loading...</div>
+            ) : topRedCards.length === 0 ? (
+              <div className="text-center text-muted-foreground">No top red cards available yet.</div>
             ) : (
               <div className="space-y-3">
                 {topRedCards.map((player, index) => (
