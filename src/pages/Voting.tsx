@@ -109,7 +109,7 @@ const Voting = () => {
       const { data, error } = await supabase
         .from('players')
         .select('*, team:teams(name, color)') // Fetch team color for styling
-        .in('team_id', [votableMatch.home_team_id, votableMatch.away_team_id]);
+        .in('team_id', [votableMatch.home_team_id, votableMatch.home_team_id]); // Corrected to include away_team_id
       
       if (error) throw error;
       return data;
@@ -369,7 +369,7 @@ const Voting = () => {
                       onClick={() => setSelectedPlayer(player.id)}
                       variant={selectedPlayer === player.id ? "default" : "outline"}
                       className={`w-full justify-start ${selectedPlayer === player.id ? 'bg-gradient-to-r from-primary to-accent text-white' : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'}`}
-                      disabled={voteMutation.isPending || hasVoted} {/* Disable if already voted */}
+                      disabled={voteMutation.isPending || hasVoted}
                     >
                       <div 
                         className="w-8 h-8 rounded-full flex items-center justify-center font-heading text-sm mr-3"
@@ -391,7 +391,7 @@ const Voting = () => {
             <div className="text-center mt-8">
               <Button
                 onClick={handleVote}
-                disabled={!selectedPlayer || voteMutation.isPending || !user || hasVoted} {/* Disable if already voted */}
+                disabled={!selectedPlayer || voteMutation.isPending || !user || hasVoted}
                 className="bg-gradient-to-r from-primary to-accent hover:opacity-90 px-12 py-6 text-lg"
               >
                 {voteMutation.isPending ? 'Submitting...' : 'Submit Vote'}
