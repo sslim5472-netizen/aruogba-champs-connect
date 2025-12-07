@@ -9,6 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const playerSchema = z.object({
   name: z.string().trim().min(1, "Player name is required").max(100, "Name too long"),
@@ -207,19 +213,13 @@ export const PlayersManagement = () => {
         )}
       </div>
 
-      {isEditing && (
-        <Card className="p-6 glass-card">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">
-                {editingPlayer ? "Edit Player" : "Create New Player"}
-              </h3>
-              <Button type="button" variant="ghost" size="sm" onClick={resetForm}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="sm:max-w-[600px] glass-card">
+          <DialogHeader>
+            <DialogTitle>{editingPlayer ? "Edit Player" : "Create New Player"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="name">Player Name</Label>
                 <Input
@@ -338,17 +338,17 @@ export const PlayersManagement = () => {
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button type="submit">
-                {editingPlayer ? "Update Player" : "Create Player"}
-              </Button>
+            <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={resetForm}>
                 Cancel
               </Button>
+              <Button type="submit">
+                {editingPlayer ? "Update Player" : "Create Player"}
+              </Button>
             </div>
           </form>
-        </Card>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-6">
         {Object.keys(groupedPlayers).sort().map((teamName) => (
