@@ -41,7 +41,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchUserProfile = async (userId: string) => {
-    // Use type assertion to bypass the generated type check for 'profiles'
     const { data: profileData, error: profileError } = await supabase
       .from('profiles' as any) // Type assertion to fix TS error
       .select('first_name, last_name')
@@ -64,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        // console.log("Auth state change event:", _event, "Session:", session); // Debug log
+        console.log("Auth state change event:", _event, "Session:", session); // Debug log
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -99,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      // console.log("Initial session check:", session); // Debug log
+      console.log("Initial session check:", session); // Debug log
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -155,17 +154,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    console.log("Initiating sign out...");
+    console.log("Initiating sign out process...");
     setLoading(true);
     
     try {
+      console.log("Calling supabase.auth.signOut()...");
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error("Error signing out from Supabase:", error);
         toast.error("Failed to sign out: " + error.message);
       } else {
-        console.log("Successfully signed out from Supabase.");
+        console.log("Successfully signed out from Supabase. Initiating page reload...");
         toast.success("Successfully logged out!");
         // Perform a full page reload to ensure all state is reset cleanly
         window.location.assign('/');
@@ -174,7 +174,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Unexpected error during sign out:", err);
       toast.error("An unexpected error occurred during logout.");
     } finally {
-      // Reset state optimistically before reload
+      // These state resets are mostly for immediate UI feedback before the reload,
+      // but the reload will ultimately reset everything.
       setUser(null);
       setSession(null);
       setUserRole(null);
@@ -182,7 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setFirstName(null);
       setLastName(null);
       setLoading(false);
-      console.log("Sign out process finalized in hook.");
+      console.log("Sign out process finalized in hook (before potential reload).");
     }
   };
 
