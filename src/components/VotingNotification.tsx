@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Trophy, XCircle, ArrowRight } from "lucide-react"; // Added ArrowRight
+import { Trophy, XCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const VOTING_GRACE_PERIOD_MINUTES = 10; // Voting ends 10 minutes after match status becomes 'finished'
@@ -30,7 +30,7 @@ const VotingNotification = () => {
         away_team:teams!matches_away_team_id_fkey(name)
       `)
       .in('status', ['live', 'finished'])
-      .order('match_date', { ascending: true }); // Order by date to pick the earliest relevant match
+      .order('match_date', { ascending: true });
 
     if (error) {
       console.error("Error fetching matches for voting notification:", error);
@@ -122,6 +122,7 @@ const VotingNotification = () => {
       });
       setActiveToastId(id);
     } else if ((!votableMatch || location.pathname === '/voting') && activeToastId) {
+      // If the condition to show the toast is no longer met, dismiss it using the stored ID
       toast.dismiss(activeToastId);
       setActiveToastId(null);
     }
