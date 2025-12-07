@@ -102,7 +102,7 @@ const Voting = () => {
       
       const { data, error } = await supabase
         .from('players')
-        .select('*, team:teams(*)')
+        .select('*, team:teams(name, color)') // Fetch team color for styling
         .in('team_id', [votableMatch.home_team_id, votableMatch.away_team_id]);
       
       if (error) throw error;
@@ -321,7 +321,7 @@ const Voting = () => {
               <div className="space-y-2">
                 {players
                   ?.sort((a, b) => (voteResults?.[b.id] || 0) - (voteResults?.[a.id] || 0))
-                  .map((player) => (
+                  .map((player: any) => (
                     <div key={player.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                       <span className="font-heading flex items-center gap-2">
                         {player.name}
@@ -338,7 +338,7 @@ const Voting = () => {
         ) : (
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {players?.map((player) => (
+              {players?.map((player: any) => (
                 <button
                   key={player.id}
                   onClick={() => setSelectedPlayer(player.id)}
