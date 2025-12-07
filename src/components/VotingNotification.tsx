@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useMutation
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -170,7 +170,7 @@ const VotingNotification = () => {
                   if (!user) {
                     toast.error("Please sign in to vote.");
                     navigate('/auth');
-                    toast.dismiss(t.id); 
+                    toast.dismiss(t); 
                     setActiveToastId(null);
                     return;
                   }
@@ -186,7 +186,7 @@ const VotingNotification = () => {
           <Button 
             variant="ghost" 
             onClick={() => {
-              toast.dismiss(t.id); 
+              toast.dismiss(t); 
               setActiveToastId(null);
             }}
             className="text-muted-foreground hover:text-foreground"
