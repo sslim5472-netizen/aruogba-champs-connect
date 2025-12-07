@@ -1,0 +1,2 @@
+-- Drop the complex policy that allows authenticated users to view all votes for a match if they have voted
+DROP POLICY IF EXISTS "Authenticated users can view all votes for a match if they have voted" ON public.match_votes;
