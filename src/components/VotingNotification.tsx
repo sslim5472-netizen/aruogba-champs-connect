@@ -9,7 +9,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Trophy, XCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const VOTING_GRACE_PERIOD_MINUTES = 10; // Voting ends 10 minutes after match status becomes 'finished'
+const VOTING_GRACE_PERIOD_MINUTES = 8; // Voting ends 8 minutes after match status becomes 'finished'
 
 const VotingNotification = () => {
   const { user, loading: authLoading } = useAuth();
@@ -65,7 +65,7 @@ const VotingNotification = () => {
             .select('id')
             .eq('user_id', user.id)
             .eq('match_id', match.id)
-            .single();
+            .maybeSingle();
           
           if (existingVote) {
             console.log(`fetchVotableMatch: User ${user.id} already voted for match ${match.id}. Skipping.`);

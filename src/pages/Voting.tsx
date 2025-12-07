@@ -15,7 +15,7 @@ const voteSchema = z.object({
   matchId: z.string().uuid('Invalid match selection')
 });
 
-const VOTING_GRACE_PERIOD_MINUTES = 10; // Voting ends 10 minutes after match status becomes 'finished'
+const VOTING_GRACE_PERIOD_MINUTES = 8; // Voting ends 8 minutes after match status becomes 'finished'
 
 const Voting = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -309,7 +309,7 @@ const Voting = () => {
             <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-2xl font-heading mb-2">No Active Voting</h2>
             <p className="text-muted-foreground">
-              Voting will be available for live matches and for 10 minutes after a match finishes.
+              Voting will be available for live matches and for 8 minutes after a match finishes.
             </p>
           </div>
         </div>
