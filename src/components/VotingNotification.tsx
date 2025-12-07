@@ -80,47 +80,62 @@ const VotingNotification = () => {
 
   useEffect(() => {
     if (!authLoading && !matchLoading && votableMatch && location.pathname !== '/voting' && !activeToastId) {
-      const id = toast.custom((t) => (
-        <div className="glass-card p-6 rounded-xl shadow-lg w-full max-w-md mx-auto flex flex-col items-center text-center">
-          <Trophy className="w-12 h-12 text-gold mb-4 animate-bounce" />
-          <h3 className="text-xl font-heading gradient-text mb-2">Player of the Match Voting!</h3>
-          <p className="text-muted-foreground text-sm mb-4">
-            {votableMatch.home_team.name} vs {votableMatch.away_team.name}
-          </p>
-          <p className="text-sm text-muted-foreground mb-4">
-            Vote for your MOTM now!
-          </p>
-          
-          <Button
-            onClick={() => {
-              navigate('/voting');
-              toast.dismiss(t); 
-            }}
-            className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 mb-4"
-          >
-            Go to Voting Page <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            onClick={() => {
-              toast.dismiss(t); 
-            }}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <XCircle className="w-4 h-4 mr-2" />
-            Close
-          </Button>
-        </div>
-      ), {
+      const id = toast.custom((t) => {
+        console.log("Toast created with ID:", t); // Debug log
+        return (
+          <div className="glass-card p-6 rounded-xl shadow-lg w-full max-w-md mx-auto flex flex-col items-center text-center">
+            <Trophy className="w-12 h-12 text-gold mb-4 animate-bounce" />
+            <h3 className="text-xl font-heading gradient-text mb-2">Player of the Match Voting!</h3>
+            <p className="text-muted-foreground text-sm mb-4">
+              {votableMatch.home_team.name} vs {votableMatch.away_team.name}
+            </p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Vote for your MOTM now!
+            </p>
+            
+            <Button
+              onClick={() => {
+                console.log("Go to Voting Page button clicked. Dismissing toast and navigating."); // Debug log
+                toast.dismiss(t); 
+                navigate('/voting');
+              }}
+              className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 mb-4"
+            >
+              Go to Voting Page <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                console.log("Close button clicked. Dismissing toast with ID:", activeToastId); // Debug log
+                if (activeToastId) {
+                  toast.dismiss(activeToastId); 
+                } else {
+                  toast.dismiss(t); // Fallback if activeToastId isn't set yet
+                }
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <XCircle className="w-4 h-4 mr-2" />
+              Close
+            </Button>
+          </div>
+        );
+      }, {
         duration: Infinity, // Keep toast open until dismissed or voted
         position: 'bottom-right',
-        onAutoClose: () => setActiveToastId(null),
-        onDismiss: () => setActiveToastId(null), // This ensures state is cleared when toast is dismissed
+        onAutoClose: () => {
+          console.log("Toast auto-closed. Clearing activeToastId."); // Debug log
+          setActiveToastId(null);
+        },
+        onDismiss: () => {
+          console.log("Toast dismissed. Clearing activeToastId."); // Debug log
+          setActiveToastId(null);
+        },
       });
       setActiveToastId(id);
     } else if ((!votableMatch || location.pathname === '/voting') && activeToastId) {
-      // Dismiss the toast if the user navigates to the voting page or if the match is no longer votable
+      console.log("Dismissing toast due to no votable match or navigation to voting page. ID:", activeToastId); // Debug log
       toast.dismiss(activeToastId);
       setActiveToastId(null);
     }
@@ -130,6 +145,7 @@ const VotingNotification = () => {
   useEffect(() => {
     return () => {
       if (activeToastId) {
+        console.log("Component unmounting. Dismissing active toast with ID:", activeToastId); // Debug log
         toast.dismiss(activeToastId);
       }
     };
