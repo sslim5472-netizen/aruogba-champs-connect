@@ -1,21 +1,47 @@
 import Navigation from "@/components/Navigation";
 import TeamCard from "@/components/TeamCard";
-import airwayLogo from "@/assets/airway-fc.jpg";
-import knightsLogo from "@/assets/knights-fc.jpg";
-import starsLogo from "@/assets/stars-fc.jpg";
-import spartaLogo from "@/assets/sparta-fc.jpg";
-import kingsLogo from "@/assets/kings-fc.jpg";
-import enjoymentLogo from "@/assets/enjoyment-fc.jpg";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+// Define a type for the team data including player count
+interface TeamWithPlayerCount {
+  id: string;
+  name: string;
+  captain_name: string;
+  logo_url: string;
+  color: string;
+  player_count: number;
+}
 
 const Teams = () => {
-  const teams = [
-    { name: "Airway FC", captain_name: "Presido", logo: airwayLogo, color: "#007BFF" },
-    { name: "Knights FC", captain_name: "Musoko", logo: knightsLogo, color: "#0056B3" },
-    { name: "Stars FC", captain_name: "Andre", logo: starsLogo, color: "#FFD700" },
-    { name: "Sparta FC", captain_name: "Brazil", logo: spartaLogo, color: "#DC3545" },
-    { name: "Kings FC", captain_name: "Ken", logo: kingsLogo, color: "#6B2C91" },
-    { name: "Enjoyment FC", captain_name: "Odion", logo: enjoymentLogo, color: "#FF6600" },
-  ];
+  const { data: teams, isLoading } = useQuery<TeamWithPlayerCount[]>({
+    queryKey: ["teams-with-player-count"],
+    queryFn: async () => {
+      const { data: teamsData, error: teamsError } = await supabase
+        .from("teams")
+        .select("id, name, captain_name, logo_url, color")
+        .order("name");
+
+      if (teamsError) throw teamsError;
+
+      // For each team, fetch the count of players
+      const teamsWithCounts = await Promise.all(
+        teamsData.map(async (team) => {
+          const { count, error: countError } = await supabase
+            .from("players")
+            .select("id", { count: "exact" })
+            .eq("team_id", team.id);
+
+          if (countError) {
+            console.error(`Error fetching player count for team ${team.name}:`, countError);
+            return { ...team, player_count: 0 }; // Default to 0 on error
+          }
+          return { ...team, player_count: count || 0 };
+        })
+      );
+      return teamsWithCounts;
+    },
+  });
 
   return (
     <div className="min-h-screen">
@@ -31,11 +57,22 @@ const Teams = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-scale-in">
-          {teams.map((team) => (
-            <TeamCard key={team.name} {...team} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="text-center text-muted-foreground">Loading teams...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-scale-in">
+            {teams?.map((team) => (
+              <TeamCard 
+                key={team.id} 
+                name={team.name} 
+                captain_name={team.captain_name} 
+                logo={team.logo_url} 
+                color={team.color} 
+                playerCount={team.player_count} // Pass the dynamic count
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

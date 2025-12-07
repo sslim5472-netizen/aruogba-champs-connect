@@ -1,13 +1,17 @@
 import { Link } from "react-router-dom";
+import { getTeamLogo } from "@/lib/teamUtils"; // Import the utility
 
 interface TeamCardProps {
   name: string;
   captain_name: string;
   logo: string;
   color: string;
+  playerCount: number; // Add new prop for player count
 }
 
-const TeamCard = ({ name, captain_name, logo, color }: TeamCardProps) => {
+const TeamCard = ({ name, captain_name, logo, color, playerCount }: TeamCardProps) => {
+  const logoSrc = getTeamLogo(name, logo); // Use the utility for logo
+
   return (
     <Link to={`/teams/${name.toLowerCase().replace(/\s+/g, "-")}`}>
       <div className="glass-card p-6 rounded-xl hover:scale-105 transition-all duration-300 group cursor-pointer">
@@ -19,9 +23,10 @@ const TeamCard = ({ name, captain_name, logo, color }: TeamCardProps) => {
           }}
         >
           <img 
-            src={logo} 
+            src={logoSrc} 
             alt={name} 
             className="w-full h-full object-contain"
+            onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }} // Fallback for broken images
           />
         </div>
         
@@ -32,7 +37,7 @@ const TeamCard = ({ name, captain_name, logo, color }: TeamCardProps) => {
         
         <div className="mt-4 pt-4 border-t border-border/50">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Players: 10</span>
+            <span>Players: {playerCount}</span> {/* Display dynamic player count */}
             <span className="text-primary">View Team →</span>
           </div>
         </div>
