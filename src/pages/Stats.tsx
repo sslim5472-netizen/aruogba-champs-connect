@@ -42,16 +42,13 @@ const Stats = () => {
   const { data: teamsData, isLoading: teamsLoading } = useQuery({
     queryKey: ["league-standings"],
     queryFn: async () => {
-      console.log("Fetching league standings...");
       const { data, error } = await supabase
         .from("teams")
         .select("id, name, logo_url, wins, draws, losses, goals_for, goals_against")
         .order("name");
       if (error) {
-        console.error("Error fetching league standings:", error);
         throw error;
       }
-      console.log("League standings data:", data);
       return data as TeamStat[];
     },
   });
@@ -75,14 +72,12 @@ const Stats = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
-      console.log("Fetching top player stats...");
       // Fetch top scorers
       const { data: scorers } = await supabase
         .from("players")
         .select("name, goals, teams(name)")
         .order("goals", { ascending: false })
         .limit(5);
-      console.log("Top scorers data:", scorers);
 
       // Fetch top assists
       const { data: assists } = await supabase
@@ -90,7 +85,6 @@ const Stats = () => {
         .select("name, assists, teams(name)")
         .order("assists", { ascending: false })
         .limit(5);
-      console.log("Top assists data:", assists);
 
       // Fetch top yellow cards
       const { data: yellowCards } = await supabase
@@ -98,7 +92,6 @@ const Stats = () => {
         .select("name, yellow_cards, teams(name)")
         .order("yellow_cards", { ascending: false })
         .limit(5);
-      console.log("Top yellow cards data:", yellowCards);
 
       // Fetch top red cards
       const { data: redCards } = await supabase
@@ -106,7 +99,6 @@ const Stats = () => {
         .select("name, red_cards, teams(name)")
         .order("red_cards", { ascending: false })
         .limit(5);
-      console.log("Top red cards data:", redCards);
 
       // Filter out players with 0 stats before setting state
       if (scorers) setTopScorers(scorers.filter(p => p.goals > 0) as PlayerStat[]);

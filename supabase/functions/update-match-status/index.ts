@@ -45,7 +45,6 @@ serve(async (req) => {
       .lte('match_date', now);
 
     if (selectError) {
-      console.error('Error selecting matches:', selectError);
       throw new Error('Failed to fetch matches for status update.');
     }
 
@@ -69,11 +68,8 @@ serve(async (req) => {
       .in('id', matchIdsToUpdate);
 
     if (updateError) {
-      console.error('Error updating match statuses:', updateError);
       throw new Error('Failed to update match statuses to live.');
     }
-
-    console.log(`Successfully updated ${matchIdsToUpdate.length} matches to 'live'.`);
 
     return new Response(JSON.stringify({
       success: true,

@@ -95,6 +95,7 @@ const VotingNotification = () => {
             onClick={() => {
               navigate('/voting');
               toast.dismiss(t); 
+              setActiveToastId(null);
             }}
             className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 mb-4"
           >
@@ -105,6 +106,7 @@ const VotingNotification = () => {
             variant="ghost" 
             onClick={() => {
               toast.dismiss(t); 
+              setActiveToastId(null);
             }}
             className="text-muted-foreground hover:text-foreground"
           >
@@ -116,11 +118,11 @@ const VotingNotification = () => {
         duration: Infinity, // Keep toast open until dismissed or voted
         position: 'bottom-right',
         onAutoClose: () => setActiveToastId(null),
-        onDismiss: () => setActiveToastId(null), // This ensures state is cleared when toast is dismissed
+        onDismiss: () => setActiveToastId(null),
       });
       setActiveToastId(id);
     } else if ((!votableMatch || location.pathname === '/voting') && activeToastId) {
-      // Dismiss the toast if the user navigates to the voting page or if the match is no longer votable
+      // If the condition to show the toast is no longer met, dismiss it using the stored ID
       toast.dismiss(activeToastId);
       setActiveToastId(null);
     }

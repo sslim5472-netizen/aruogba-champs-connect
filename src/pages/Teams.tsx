@@ -17,17 +17,14 @@ const Teams = () => {
   const { data: teams, isLoading } = useQuery<TeamWithPlayerCount[]>({
     queryKey: ["teams-with-player-count"],
     queryFn: async () => {
-      console.log("Fetching teams with player count...");
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
         .select("id, name, captain_name, logo_url, color")
         .order("name");
 
       if (teamsError) {
-        console.error("Error fetching teams data:", teamsError);
         throw teamsError;
       }
-      console.log("Teams data:", teamsData);
 
       // For each team, fetch the count of players
       const teamsWithCounts = await Promise.all(
@@ -44,7 +41,6 @@ const Teams = () => {
           return { ...team, player_count: count || 0 };
         })
       );
-      console.log("Teams with player counts:", teamsWithCounts);
       return teamsWithCounts;
     },
   });

@@ -184,7 +184,7 @@ const Voting = () => {
       const { error: emailError } = await supabase.functions.invoke('send-vote-confirmation', {
         body: {
           playerName: selectedPlayerData?.name || 'Unknown Player',
-          matchDetails: `${votableMatch.home_team?.name} ${votableMatch.home_score} - ${votableMatch.away_team?.name}`,
+          matchDetails: `${votableMatch.home_team.name} ${votableMatch.home_score} - ${votableMatch.away_team.name}`,
         }
       });
 
@@ -304,7 +304,7 @@ const Voting = () => {
             Player of the Match
           </h1>
           <p className="text-muted-foreground">
-            {votableMatch.home_team?.name} vs {votableMatch.away_team?.name}
+            {votableMatch.home_team.name} vs {votableMatch.away_team.name}
           </p>
           <p className="text-sm text-muted-foreground">
             Current Score: {votableMatch.home_score} - {votableMatch.away_score}
@@ -350,8 +350,8 @@ const Voting = () => {
                     <div 
                       className="w-12 h-12 rounded-lg flex items-center justify-center font-heading"
                       style={{ 
-                        background: `linear-gradient(135deg, ${player.team?.color}33, ${player.team?.color}66)`,
-                        color: player.team?.color
+                        background: `linear-gradient(135deg, ${player.team.color}33, ${player.team.color}66)`,
+                        color: player.team.color
                       }}
                     >
                       {player.jersey_number}
@@ -359,7 +359,7 @@ const Voting = () => {
                     
                     <div className="flex-1">
                       <h3 className="font-heading text-lg">{player.name}</h3>
-                      <p className="text-sm text-muted-foreground">{player.team?.name}</p>
+                      <p className="text-sm text-muted-foreground">{player.team.name}</p>
                       <p className="text-xs text-muted-foreground">{player.position}</p>
                     </div>
                     

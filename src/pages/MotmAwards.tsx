@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
-import { Award, Star } from "lucide-react"; // Added Star icon
+import { Award, Star } from "lucide-react";
 import { format } from "date-fns";
+import { getTeamLogo } from "@/lib/teamUtils"; // Import getTeamLogo
 
 const MotmAwards = () => {
   const { data: awards, isLoading } = useQuery({
@@ -13,7 +14,7 @@ const MotmAwards = () => {
         .select(`
           *,
           match:matches!inner(*, home_team:teams!matches_home_team_id_fkey(name, logo_url), away_team:teams!matches_away_team_id_fkey(name, logo_url)),
-          player:players!inner(*, team:teams!inner(name, color, logo_url, photo_url))
+          player:players!inner(*, team:teams!inner(name, color, logo_url), photo_url) // Removed photo_url from team, added to player
         `)
         .order('created_at', { ascending: false });
       
@@ -48,14 +49,14 @@ const MotmAwards = () => {
             {awards?.map((award: any) => (
               <div key={award.id} className="glass-card rounded-xl p-6 text-center group hover:glow-effect transition-all">
                 <img
-                  src={award.player.photo_url || award.player.team.logo_url}
+                  src={getTeamLogo(award.player.name, award.player.photo_url || award.player.team.logo_url)}
                   alt={award.player.name}
                   className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4"
                   style={{ borderColor: award.player.team.color }}
                 />
                 <h3 className="text-2xl font-heading flex items-center justify-center gap-2">
                   {award.player.name}
-                  <Star className="w-5 h-5 text-gold fill-gold" /> {/* Star for the winner */}
+                  <Star className="w-5 h-5 text-gold fill-gold" />
                 </h3>
                 <p className="text-muted-foreground mb-4">{award.player.team.name}</p>
                 

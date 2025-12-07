@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield, LogIn } from "lucide-react";
 import { toast } from "sonner";
-import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 import { z } from "zod";
 
 const adminAuthSchema = z.object({
