@@ -1,7 +1,7 @@
 import Navigation from "@/components/Navigation";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Goal, Users, Award, Shield, CalendarDays } from "lucide-react";
+import { Trophy, Goal, Users, Award, Shield, CalendarDays, BarChart3 } from "lucide-react"; // Added BarChart3
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
