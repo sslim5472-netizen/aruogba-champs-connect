@@ -106,8 +106,9 @@ const Voting = () => {
     queryFn: async () => {
       if (!votableMatch) return {};
       
+      // Query match_votes directly instead of public_votes
       const { data, error } = await supabase
-        .from('public_votes')
+        .from('match_votes')
         .select('player_id')
         .eq('match_id', votableMatch.id);
       
