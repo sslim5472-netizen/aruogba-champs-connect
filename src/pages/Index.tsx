@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Countdown from "@/components/Countdown";
 import TeamCard from "@/components/TeamCard";
+import UpcomingMatchesSection from "@/components/UpcomingMatchesSection"; // Import the new component
 import { Trophy, Calendar, BarChart3, Vote, Radio, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -97,6 +98,11 @@ const Index = () => {
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* Upcoming Matches Section */}
+      <div className="container mx-auto px-4 py-20">
+        <UpcomingMatchesSection />
       </div>
 
       {/* Teams Section */}

@@ -1,61 +1,81 @@
 import { useEffect, useState } from "react";
 import Navigation from "@/components/Navigation";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, Trophy, Target, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import airwayLogo from "@/assets/airway-fc.jpg";
-import knightsLogo from "@/assets/knights-fc.jpg";
-import starsLogo from "@/assets/stars-fc.jpg";
-import spartaLogo from "@/assets/sparta-fc.jpg";
-import kingsLogo from "@/assets/kings-fc.jpg";
-import enjoymentLogo from "@/assets/enjoyment-fc.jpg";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getTeamLogo } from "@/lib/teamUtils"; // Import the utility
 
 const Fixtures = () => {
-  const [matches, setMatches] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const getTeamLogo = (teamName: string) => {
-    const logoMap: { [key: string]: string } = {
-      "Airway FC": airwayLogo,
-      "Knights FC": knightsLogo,
-      "Stars FC": starsLogo,
-      "Sparta FC": spartaLogo,
-      "Kings FC": kingsLogo,
-      "Enjoyment FC": enjoymentLogo,
-    };
-    return logoMap[teamName] || "";
-  };
-
-  useEffect(() => {
-    const fetchMatches = async () => {
+  const { data: matches, isLoading } = useQuery({
+    queryKey: ["all-matches-fixtures"],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("matches")
         .select(`
-          *,
+          id,
+          match_date,
+          venue,
+          status,
+          home_score,
+          away_score,
           home_team:teams!matches_home_team_id_fkey(name, logo_url),
           away_team:teams!matches_away_team_id_fkey(name, logo_url)
         `)
         .order("match_date", { ascending: true });
 
-      if (!error && data) {
-        setMatches(data);
-      }
-      setLoading(false);
-    };
+      if (error) throw error;
+      return data;
+    },
+  });
 
-    fetchMatches();
-  }, []);
+  // Realtime subscription for match updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('fixtures-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'matches',
+        },
+        () => {
+          console.log("Realtime update: matches table changed, refetching all-matches-fixtures.");
+          queryClient.invalidateQueries({ queryKey: ['all-matches-fixtures'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const handleMatchClick = (match: any) => {
     if (match.status === 'live') {
-      navigate('/live'); // Redirect to the live page
+      navigate('/live'); // Redirect to the live page for live matches
+    } else if (match.status === 'finished') {
+      navigate(`/matches/${match.id}`); // Redirect to new MatchDetails page for finished matches
     }
-    // Optionally, you could navigate to a match detail page for scheduled/finished matches
-    // else {
-    //   navigate(`/matches/${match.id}`); 
-    // }
+    // For 'scheduled' matches, no specific action on click for now, or could navigate to a preview page
+  };
+
+  const getMatchStatusDisplay = (status: string) => {
+    switch (status) {
+      case 'scheduled':
+        return <span className="ml-2 px-2 py-1 rounded text-xs bg-yellow-500/20 text-yellow-300">SCHEDULED</span>;
+      case 'live':
+        return <span className="ml-2 px-2 py-1 rounded text-xs bg-red-500/20 text-red-300 animate-pulse">LIVE</span>;
+      case 'finished':
+        return <span className="ml-2 px-2 py-1 rounded text-xs bg-blue-500/20 text-blue-300">FINISHED</span>;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -65,24 +85,24 @@ const Fixtures = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12 animate-fade-in">
           <h1 className="text-4xl md:text-5xl font-heading gradient-text mb-4">
-            Match Schedule
+            Match Schedule & Results
           </h1>
           <p className="text-muted-foreground">
             End of Year Champion League
           </p>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="text-center text-muted-foreground">Loading matches...</div>
-        ) : matches.length === 0 ? (
+        ) : matches?.length === 0 ? (
           <div className="text-center text-muted-foreground">No matches scheduled yet</div>
         ) : (
-          <div className="space-y-4"> {/* Added space-y-4 for consistent spacing */}
-          {matches.map((match, index) => (
+          <div className="space-y-4">
+          {matches?.map((match) => (
             <div 
-              key={index} 
-              className="glass-card p-6 rounded-xl hover:glow-effect transition-all cursor-pointer" // Added cursor-pointer
-              onClick={() => handleMatchClick(match)} // Added onClick handler
+              key={match.id} 
+              className="glass-card p-6 rounded-xl hover:glow-effect transition-all cursor-pointer"
+              onClick={() => handleMatchClick(match)}
             >
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -104,21 +124,25 @@ const Fixtures = () => {
                     <div className="font-heading text-lg">{match.home_team?.name}</div>
                     {match.home_team?.name && (
                       <img 
-                        src={getTeamLogo(match.home_team.name)} 
+                        src={getTeamLogo(match.home_team.name, match.home_team.logo_url)} 
                         alt={match.home_team.name}
                         className="w-10 h-10 rounded-full object-contain border-2 border-border"
                       />
                     )}
                   </div>
                   
-                  <div className="px-4 py-2 bg-muted rounded-lg font-heading text-sm">
-                    VS
+                  <div className="px-4 py-2 bg-muted rounded-lg font-heading text-sm flex items-center gap-2">
+                    {match.status === 'finished' || match.status === 'live' ? (
+                      <span className="text-xl font-bold">{match.home_score} - {match.away_score}</span>
+                    ) : (
+                      <span>VS</span>
+                    )}
                   </div>
                   
                   <div className="text-left flex-1 flex items-center gap-3">
                     {match.away_team?.name && (
                       <img 
-                        src={getTeamLogo(match.away_team.name)} 
+                        src={getTeamLogo(match.away_team.name, match.away_team.logo_url)} 
                         alt={match.away_team.name}
                         className="w-10 h-10 rounded-full object-contain border-2 border-border"
                       />
@@ -130,11 +154,7 @@ const Fixtures = () => {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4" />
                   <span>{match.venue || "Main Pitch"}</span>
-                  {match.status === 'live' && (
-                    <span className="ml-2 px-2 py-1 rounded text-xs bg-red-500/20 text-red-300 animate-pulse">
-                      LIVE
-                    </span>
-                  )}
+                  {getMatchStatusDisplay(match.status)}
                 </div>
               </div>
             </div>

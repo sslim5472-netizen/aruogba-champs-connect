@@ -8,6 +8,7 @@ import Teams from "./pages/Teams";
 import TeamProfile from "./pages/TeamProfile";
 import Fixtures from "./pages/Fixtures";
 import LiveMatch from "./pages/LiveMatch";
+import MatchDetails from "./pages/MatchDetails"; // Import the new MatchDetails component
 import Stats from "./pages/Stats";
 import TopScorers from "./pages/TopScorers";
 import TopAssists from "./pages/TopAssists";
@@ -23,7 +24,7 @@ import AdminManagement from "./pages/AdminManagement";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
-import VotingNotification from "./components/VotingNotification"; // Import the new component
+import VotingNotification from "./components/VotingNotification";
 
 const queryClient = new QueryClient();
 
@@ -32,16 +33,17 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <Sonner />
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}> {/* Added v7_relativeSplatPath */}
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <div className="flex flex-col min-h-screen">
             <div className="flex-grow">
-              <VotingNotification /> {/* Place the notification component here */}
+              <VotingNotification />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/teams" element={<Teams />} />
                 <Route path="/teams/:teamSlug" element={<TeamProfile />} />
                 <Route path="/fixtures" element={<Fixtures />} />
                 <Route path="/live" element={<LiveMatch />} />
+                <Route path="/matches/:matchId" element={<MatchDetails />} /> {/* New route for MatchDetails */}
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/stats/top-scorers" element={<TopScorers />} />
                 <Route path="/stats/top-assists" element={<TopAssists />} />
