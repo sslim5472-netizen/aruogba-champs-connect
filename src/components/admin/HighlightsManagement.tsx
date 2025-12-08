@@ -16,7 +16,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription, // Import DialogDescription
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 // Simplified schema: empty string inputs will be converted to null for the database
@@ -49,8 +49,8 @@ export const HighlightsManagement = () => {
     description: "",
     video_url: "",
     thumbnail_url: "",
-    match_id: "none", // Changed from "" to "none"
-    team_id: "none",  // Changed from "" to "none"
+    match_id: "none",
+    team_id: "none",
   });
 
   const { data: matches } = useQuery({
@@ -79,7 +79,7 @@ export const HighlightsManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("highlights")
-        .select("id, title, description, video_url, thumbnail_url, match_id, team_id") // Explicitly select columns
+        .select("id, title, description, video_url, thumbnail_url, match_id, team_id")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Highlight[];
@@ -89,15 +89,31 @@ export const HighlightsManagement = () => {
   const handleFileUpload = async (file: File, type: 'video' | 'thumbnail') => {
     try {
       setUploading(true);
+      if (!file) {
+        toast.error(`No ${type} file selected.`);
+        return;
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-      const filePath = `${type}s/${fileName}`;
+      const folder = type === 'video' ? 'videos' : 'thumbnails'; // Explicit folder names
+      const filePath = `${folder}/${fileName}`;
+
+      console.log(`Attempting to upload ${type} to path: ${filePath}`);
+      console.log(`File details: name=${file.name}, type=${file.type}, size=${file.size}`);
 
       const { error: uploadError } = await supabase.storage
         .from('highlights')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false, // Ensure we don't accidentally overwrite if that's an issue
+          contentType: file.type, // Explicitly set content type
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error(`Supabase Storage upload error for ${type}:`, uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('highlights')
@@ -110,8 +126,9 @@ export const HighlightsManagement = () => {
       }
 
       toast.success(`${type === 'video' ? 'Video' : 'Thumbnail'} uploaded successfully`);
-    } catch (error) {
-      toast.error(`Failed to upload ${type}`);
+    } catch (error: any) {
+      console.error(`Caught error during ${type} upload:`, error);
+      toast.error(`Failed to upload ${type}: ${error.message || 'Unknown error'}`);
     } finally {
       setUploading(false);
     }
@@ -119,7 +136,6 @@ export const HighlightsManagement = () => {
 
   const createMutation = useMutation({
     mutationFn: async (newHighlightData: z.infer<typeof highlightSchema>) => {
-      // Prepare data for insertion, converting empty strings to null
       const highlightToInsert: TablesInsert<'highlights'> = {
         title: newHighlightData.title,
         video_url: newHighlightData.video_url || null,
@@ -144,7 +160,6 @@ export const HighlightsManagement = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: z.infer<typeof highlightSchema> }) => {
-      // Prepare data for update, converting empty strings to null
       const highlightToUpdate: TablesUpdate<'highlights'> = {
         title: data.title,
         video_url: data.video_url || null,
@@ -188,8 +203,8 @@ export const HighlightsManagement = () => {
       description: "",
       video_url: "",
       thumbnail_url: "",
-      match_id: "none", // Changed from "" to "none"
-      team_id: "none",  // Changed from "" to "none"
+      match_id: "none",
+      team_id: "none",
     });
     setIsEditing(false);
     setEditingHighlight(null);
@@ -202,8 +217,8 @@ export const HighlightsManagement = () => {
       description: highlight.description || "",
       video_url: highlight.video_url || "",
       thumbnail_url: highlight.thumbnail_url || "",
-      match_id: highlight.match_id || "none", // Ensure "none" if null
-      team_id: highlight.team_id || "none",   // Ensure "none" if null
+      match_id: highlight.match_id || "none",
+      team_id: highlight.team_id || "none",
     });
     setIsEditing(true);
   };
@@ -212,15 +227,13 @@ export const HighlightsManagement = () => {
     e.preventDefault();
     
     try {
-      // Parse and transform formData before mutation
-      // Convert "none" for optional fields to null for the database
       const processedData = {
         ...formData,
         description: formData.description.trim() === "" ? null : formData.description,
         video_url: formData.video_url.trim() === "" ? null : formData.video_url,
         thumbnail_url: formData.thumbnail_url.trim() === "" ? null : formData.thumbnail_url,
-        match_id: formData.match_id === "none" ? null : formData.match_id, // Convert "none" to null
-        team_id: formData.team_id === "none" ? null : formData.team_id,     // Convert "none" to null
+        match_id: formData.match_id === "none" ? null : formData.match_id,
+        team_id: formData.team_id === "none" ? null : formData.team_id,
       };
       
       const parsedData = highlightSchema.parse(processedData);
@@ -344,7 +357,7 @@ export const HighlightsManagement = () => {
                     <SelectValue placeholder="Select match" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None</SelectItem> {/* Changed value from "" to "none" */}
+                    <SelectItem value="none">None</SelectItem>
                     {matches?.map((match: any) => (
                       <SelectItem key={match.id} value={match.id}>
                         {match.home_team.name} vs {match.away_team.name}
@@ -364,7 +377,7 @@ export const HighlightsManagement = () => {
                     <SelectValue placeholder="Select team" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None</SelectItem> {/* Changed value from "" to "none" */}
+                    <SelectItem value="none">None</SelectItem>
                     {teams?.map((team) => (
                       <SelectItem key={team.id} value={team.id}>
                         {team.name}
