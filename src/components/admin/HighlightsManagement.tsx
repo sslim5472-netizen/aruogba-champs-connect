@@ -39,6 +39,28 @@ interface Highlight {
   team_id: string | null;
 }
 
+// Helper function to generate a clean, safe filename
+const generateSafeFileName = (originalName: string, prefix: string = 'file'): string => {
+  const fileExt = originalName.split('.').pop();
+  // Sanitize the original name: remove non-alphanumeric characters, limit length
+  const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_').substring(0, 30);
+  const timestamp = Date.now();
+  const randomSuffix = Math.random().toString(36).substring(2, 8); // Shorter random string
+  
+  // Construct the new filename
+  let newFileName = `${prefix}_${timestamp}_${sanitizedName}_${randomSuffix}`;
+  if (fileExt) {
+    newFileName += `.${fileExt}`;
+  }
+  
+  // Ensure overall length is reasonable (e.g., under 100 characters)
+  if (newFileName.length > 100) {
+     newFileName = `${prefix}_${timestamp}.${fileExt}`;
+  }
+  
+  return newFileName;
+};
+
 export const HighlightsManagement = () => {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
@@ -94,20 +116,20 @@ export const HighlightsManagement = () => {
         return;
       }
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-      const folder = type === 'video' ? 'videos' : 'thumbnails'; // Explicit folder names
-      const filePath = `${folder}/${fileName}`;
+      // Generate a clean, safe filename
+      const safeFileName = generateSafeFileName(file.name, type);
+      const folder = type === 'video' ? 'videos' : 'thumbnails';
+      const filePath = `${folder}/${safeFileName}`; // e.g., videos/video_1765154922905_my_video_a1b2c3.mp4
 
-      console.log(`Attempting to upload ${type} to path: ${filePath}`);
-      console.log(`File details: name=${file.name}, type=${file.type}, size=${file.size}`);
+      console.log(`Attempting to upload ${type} with safe name: ${safeFileName} to path: ${filePath}`);
+      console.log(`Original file details: name=${file.name}, type=${file.type}, size=${file.size}`);
 
       const { error: uploadError } = await supabase.storage
         .from('highlights')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false, // Ensure we don't accidentally overwrite if that's an issue
-          contentType: file.type, // Explicitly set content type
+          upsert: false,
+          contentType: file.type,
         });
 
       if (uploadError) {
