@@ -3,7 +3,7 @@ import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { Award, Star } from "lucide-react";
 import { format } from "date-fns";
-import { getTeamLogo } from "@/lib/teamUtils"; // Import the utility
+// import { getTeamLogo } from "@/lib/teamUtils"; // No longer needed for player initials
 
 const MotmAwards = () => {
   const { data: awards, isLoading, error } = useQuery({
@@ -86,13 +86,27 @@ const MotmAwards = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {awards?.map((award: any) => (
               <div key={award.id} className="glass-card rounded-xl p-6 text-center group hover:glow-effect transition-all">
-                <img
-                  src={award.player.photo_url || getTeamLogo(award.player.team.name, award.player.team.logo_url)}
-                  alt={award.player.name}
-                  className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4"
-                  style={{ borderColor: award.player.team.color }}
-                  onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }} // Fallback for broken images
-                />
+                {award.player.photo_url ? (
+                  <img
+                    src={award.player.photo_url}
+                    alt={award.player.name}
+                    className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4"
+                    style={{ borderColor: award.player.team.color }}
+                    onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }} // Fallback for broken images
+                  />
+                ) : (
+                  <div
+                    className="w-32 h-32 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl font-bold uppercase border-4"
+                    style={{ 
+                      backgroundColor: `${award.player.team.color}33`, // Lighter background with team color
+                      color: award.player.team.color, // Text color with team color
+                      borderColor: award.player.team.color 
+                    }}
+                  >
+                    {award.player.name.charAt(0)}
+                  </div>
+                )}
+                
                 <h3 className="text-2xl font-heading flex items-center justify-center gap-2">
                   {award.player.name}
                   <Star className="w-5 h-5 text-gold fill-gold" />
