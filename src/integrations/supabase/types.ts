@@ -72,57 +72,6 @@ export type Database = {
           }
         ]
       }
-      highlights: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          match_id: string | null
-          team_id: string | null
-          thumbnail_url: string | null
-          title: string
-          updated_at: string
-          video_url: string | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          match_id?: string | null
-          team_id?: string | null
-          thumbnail_url?: string | null
-          title: string
-          updated_at?: string
-          video_url?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          match_id?: string | null
-          team_id?: string | null
-          thumbnail_url?: string | null
-          title?: string
-          updated_at?: string
-          video_url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "highlights_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "matches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "highlights_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       match_events: {
         Row: {
           created_at: string
@@ -184,7 +133,7 @@ export type Database = {
           status: Database["public"]["Enums"]["match_status"] | null
           updated_at: string
           venue: string | null
-          live_stream_url: string | null // Added live_stream_url
+          live_stream_url: string | null
         }
         Insert: {
           assistant_1?: string | null
@@ -201,7 +150,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"] | null
           updated_at?: string
           venue?: string | null
-          live_stream_url?: string | null // Added live_stream_url
+          live_stream_url?: string | null
         }
         Update: {
           assistant_1?: string | null
@@ -218,7 +167,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"] | null
           updated_at?: string
           venue?: string | null
-          live_stream_url?: string | null // Added live_stream_url
+          live_stream_url?: string | null
         }
         Relationships: [
           {
@@ -237,7 +186,7 @@ export type Database = {
           },
         ]
       }
-      match_votes: { // Added match_votes table
+      match_votes: {
         Row: {
           created_at: string
           id: string

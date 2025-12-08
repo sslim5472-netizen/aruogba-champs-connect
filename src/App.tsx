@@ -8,7 +8,7 @@ import Teams from "./pages/Teams";
 import TeamProfile from "./pages/TeamProfile";
 import Fixtures from "./pages/Fixtures";
 import LiveMatch from "./pages/LiveMatch";
-import MatchDetails from "./pages/MatchDetails"; // Import the new MatchDetails component
+import MatchDetails from "./pages/MatchDetails";
 import Stats from "./pages/Stats";
 import TopScorers from "./pages/TopScorers";
 import TopAssists from "./pages/TopAssists";
@@ -16,7 +16,7 @@ import TopYellowCards from "./pages/TopYellowCards";
 import TopRedCards from "./pages/TopRedCards";
 import Standings from "./pages/Standings";
 import Voting from "./pages/Voting";
-import Media from "./pages/Media";
+import Media from "./pages/Media"; // Media page will now only show photos
 import MotmAwards from "./pages/MotmAwards";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
@@ -43,7 +43,7 @@ const App = () => (
                 <Route path="/teams/:teamSlug" element={<TeamProfile />} />
                 <Route path="/fixtures" element={<Fixtures />} />
                 <Route path="/live" element={<LiveMatch />} />
-                <Route path="/matches/:matchId" element={<MatchDetails />} /> {/* New route for MatchDetails */}
+                <Route path="/matches/:matchId" element={<MatchDetails />} />
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/stats/top-scorers" element={<TopScorers />} />
                 <Route path="/stats/top-assists" element={<TopAssists />} />
@@ -52,7 +52,7 @@ const App = () => (
                 <Route path="/standings" element={<Standings />} />
                 <Route path="/voting" element={<Voting />} />
                 <Route path="/media" element={<Media />} />
-                <Route path="/highlights" element={<Media />} />
+                {/* Removed the /highlights route */}
                 <Route path="/motm" element={<MotmAwards />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/login" element={<AdminLogin />} />

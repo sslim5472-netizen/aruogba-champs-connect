@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/Navigation";
-import { Shield, Users, Calendar, Trophy, LogOut, Video } from "lucide-react";
+import { Shield, Users, Calendar, Trophy, LogOut } from "lucide-react"; // Removed Video icon
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -53,7 +53,7 @@ const Admin = () => {
   const adminCards = [
     {
       title: "Full CRUD Management",
-      description: "Complete control over teams, players, matches and highlights",
+      description: "Complete control over teams, players, matches and photos", // Updated description
       icon: Shield,
       path: "/admin/manage",
       roles: ['admin'],
@@ -79,13 +79,7 @@ const Admin = () => {
       path: "/live",
       roles: ['admin'],
     },
-    {
-      title: "Highlights",
-      description: "View and manage match highlights",
-      icon: Video,
-      path: "/highlights",
-      roles: ['admin'],
-    },
+    // Removed Highlights card
   ];
 
   const accessibleCards = adminCards.filter(card => 

@@ -6,10 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamsManagement } from "@/components/admin/TeamsManagement";
 import { PlayersManagement } from "@/components/admin/PlayersManagement";
 import { MatchesManagement } from "@/components/admin/MatchesManagement";
-import { HighlightsManagement } from "@/components/admin/HighlightsManagement";
 import { PhotosManagement } from "@/components/admin/PhotosManagement";
 import { MotmManagement } from "@/components/admin/MotmManagement";
-import { LeagueStandingsManagement } from "@/components/admin/LeagueStandingsManagement"; // Import new component
+import { LeagueStandingsManagement } from "@/components/admin/LeagueStandingsManagement";
 import { Shield, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -85,14 +84,14 @@ const AdminManagement = () => {
           </div>
 
           <Tabs defaultValue="teams" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-7 glass-card"> {/* Increased grid-cols to 7 */}
+            <TabsList className="grid w-full grid-cols-6 glass-card"> {/* Changed grid-cols from 7 to 6 */}
               <TabsTrigger value="teams">Teams</TabsTrigger>
               <TabsTrigger value="players">Players</TabsTrigger>
               <TabsTrigger value="matches">Matches</TabsTrigger>
-              <TabsTrigger value="highlights">Highlights</TabsTrigger>
+              {/* Removed Highlights TabTrigger */}
               <TabsTrigger value="photos">Photos</TabsTrigger>
               <TabsTrigger value="motm">MOTM</TabsTrigger>
-              <TabsTrigger value="standings">Standings</TabsTrigger> {/* New tab trigger */}
+              <TabsTrigger value="standings">Standings</TabsTrigger>
             </TabsList>
 
             <TabsContent value="teams">
@@ -107,9 +106,7 @@ const AdminManagement = () => {
               <MatchesManagement />
             </TabsContent>
 
-            <TabsContent value="highlights">
-              <HighlightsManagement />
-            </TabsContent>
+            {/* Removed Highlights TabContent */}
             
             <TabsContent value="photos">
               <PhotosManagement />
@@ -119,7 +116,7 @@ const AdminManagement = () => {
               <MotmManagement />
             </TabsContent>
 
-            <TabsContent value="standings"> {/* New tab content */}
+            <TabsContent value="standings">
               <LeagueStandingsManagement />
             </TabsContent>
           </Tabs>
