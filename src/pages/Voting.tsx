@@ -20,7 +20,7 @@ const VOTING_GRACE_PERIOD_MINUTES = 8; // Voting ends 8 minutes after match stat
 const Voting = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
-  const { user, loading: authLoading } = useAuth();
+  const { user, session, loading: authLoading } = useAuth(); // Get session from useAuth
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -89,9 +89,9 @@ const Voting = () => {
           .eq('match_id', votableMatch.id)
           .maybeSingle(); // Use maybeSingle to avoid 406 errors if no vote exists
         
-        if (error) { // If maybeSingle returns an error, it's a real error
+        if (error) { // If maybeSingle returns an error, it's a real database error
           console.error("Error checking for existing vote:", error);
-          // Optionally, toast.error("Failed to check your previous votes.");
+          toast.error("Failed to check your previous votes. Please try again.");
           setHasVoted(false); // Assume no vote if there's an error fetching
         } else {
           setHasVoted(!!existingVote);
@@ -161,7 +161,7 @@ const Voting = () => {
   const voteMutation = useMutation({
     mutationFn: async (playerId: string) => {
       if (!votableMatch) throw new Error('No match available for voting.');
-      if (!user) throw new Error('You must be logged in to vote.');
+      if (!user || !session) throw new Error('You must be logged in to vote.'); // Ensure session exists
 
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser?.email_confirmed_at) {
@@ -183,13 +183,13 @@ const Voting = () => {
         .select('id')
         .eq('user_id', user.id)
         .eq('match_id', votableMatch.id)
-        .maybeSingle(); // Use maybeSingle here too
+        .maybeSingle();
       
-      if (checkError) { // If maybeSingle returns an error, it's a real error
+      if (checkError) {
         console.error("Error re-checking for existing vote:", checkError);
         throw new Error("Failed to verify your voting status. Please try again.");
       }
-      if (existingVote) { // If data is not null, a vote exists
+      if (existingVote) {
         throw new Error('You have already voted for this match.');
       }
       
@@ -205,15 +205,20 @@ const Voting = () => {
 
       const selectedPlayerData = players?.find(p => p.id === playerId);
       
+      // Pass the actual JWT from the session
       const { error: emailError } = await supabase.functions.invoke('send-vote-confirmation', {
         body: {
           playerName: selectedPlayerData?.name || 'Unknown Player',
           matchDetails: `${votableMatch.home_team.name} ${votableMatch.home_score} - ${votableMatch.away_team.name}`,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`, // Use the actual access token
         }
       });
 
       if (emailError) {
         console.error('Failed to send confirmation email:', emailError);
+        toast.warning("Vote submitted, but failed to send confirmation email.");
       }
 
       return { playerId };
@@ -309,7 +314,7 @@ const Voting = () => {
             <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-2xl font-heading mb-2">No Active Voting</h2>
             <p className="text-muted-foreground">
-              Voting will be available for live matches and for 8 minutes after a match finishes.
+              Voting will be available for live matches and for {VOTING_GRACE_PERIOD_MINUTES} minutes after a match finishes.
             </p>
           </div>
         </div>

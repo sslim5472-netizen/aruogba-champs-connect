@@ -15,11 +15,9 @@ serve(async (req) => {
   }
 
   try {
-    // Create a Supabase client with the service role key
-    // This allows the function to bypass Row Level Security (RLS)
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', // Use service role key
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
         auth: {
           persistSession: false,
@@ -30,8 +28,8 @@ serve(async (req) => {
     const now = new Date();
     console.log(`[determine-motm] Function started at: ${now.toISOString()}`);
 
-    // 1. Find finished matches that haven't had an MOTM awarded yet
-    const { data: eligibleMatches, error: matchesError } = await supabaseClient
+    // 1. Find finished matches that haven't had an MOTM awarded yet AND whose voting window has closed
+    const { data: matchesToConsider, error: matchesError } = await supabaseClient
       .from('matches')
       .select(`
         id,
@@ -42,19 +40,18 @@ serve(async (req) => {
         away_team:teams!matches_away_team_id_fkey(name)
       `)
       .eq('status', 'finished')
-      .is('motm_awards.id', null) // Ensure no MOTM award exists for this match
       .order('match_date', { ascending: true });
 
     if (matchesError) {
-      console.error('[determine-motm] Error fetching eligible matches:', matchesError);
-      throw new Error('Failed to fetch eligible matches.');
+      console.error('[determine-motm] Error fetching matches to consider:', matchesError);
+      throw new Error('Failed to fetch matches for MOTM determination.');
     }
 
-    if (!eligibleMatches || eligibleMatches.length === 0) {
-      console.log('[determine-motm] No finished matches found without an MOTM award.');
+    if (!matchesToConsider || matchesToConsider.length === 0) {
+      console.log('[determine-motm] No finished matches found to consider for MOTM.');
       return new Response(JSON.stringify({
         success: true,
-        message: 'No finished matches found without an MOTM award.',
+        message: 'No finished matches found to consider for MOTM.',
         processedCount: 0,
       }), {
         status: 200,
@@ -62,20 +59,39 @@ serve(async (req) => {
       });
     }
 
-    console.log(`[determine-motm] Found ${eligibleMatches.length} eligible matches.`);
+    console.log(`[determine-motm] Found ${matchesToConsider.length} finished matches to consider.`);
     const awardedMatches: string[] = [];
+    let processedCount = 0;
 
-    for (const match of eligibleMatches) {
+    for (const match of matchesToConsider) {
+      processedCount++;
       const matchFinishedAt = new Date(match.updated_at);
       const votingCutoffTime = new Date(matchFinishedAt.getTime() + MOTM_ELIGIBILITY_WINDOW_MINUTES * 60 * 1000);
 
-      // Only process matches where the voting window has closed
+      // Only process matches where the voting window has definitively closed
       if (now < votingCutoffTime) {
         console.log(`[determine-motm] Skipping match ${match.id} (${match.home_team.name} vs ${match.away_team.name}): Voting window still open (ends at ${votingCutoffTime.toISOString()}).`);
         continue;
       }
 
       console.log(`[determine-motm] Processing match ${match.id} (${match.home_team.name} vs ${match.away_team.name}). Voting window closed at ${votingCutoffTime.toISOString()}.`);
+
+      // Check if an MOTM award already exists for this match to ensure idempotency
+      const { data: existingAward, error: existingAwardError } = await supabaseClient
+        .from('motm_awards')
+        .select('id')
+        .eq('match_id', match.id)
+        .maybeSingle();
+
+      if (existingAwardError) {
+        console.error(`[determine-motm] Error checking for existing MOTM award for match ${match.id}:`, existingAwardError);
+        continue; // Move to next match
+      }
+
+      if (existingAward) {
+        console.log(`[determine-motm] MOTM award already exists for match ${match.id}. Skipping.`);
+        continue; // Move to next match
+      }
 
       // 2. Fetch votes for the match within the eligibility window
       const { data: votes, error: votesError } = await supabaseClient
@@ -100,18 +116,30 @@ serve(async (req) => {
         voteCounts[vote.player_id] = (voteCounts[vote.player_id] || 0) + 1;
       }
 
-      // 4. Determine winner based on criteria
+      // 4. Determine winner based on criteria with deterministic tie-breaker
       let motmPlayerId: string | null = null;
       let maxVotes = 0;
+      let tiedPlayers: string[] = [];
 
       for (const playerId in voteCounts) {
         if (voteCounts[playerId] > maxVotes) {
           maxVotes = voteCounts[playerId];
           motmPlayerId = playerId;
+          tiedPlayers = [playerId]; // Start new tie group
+        } else if (voteCounts[playerId] === maxVotes) {
+          tiedPlayers.push(playerId); // Add to tie group
         }
       }
 
       if (motmPlayerId && maxVotes >= MOTM_VOTE_THRESHOLD) {
+        // Apply deterministic tie-breaker if there are multiple players with max votes
+        if (tiedPlayers.length > 1) {
+          // Sort by player_id (UUID) lexicographically to ensure deterministic tie-breaking
+          tiedPlayers.sort();
+          motmPlayerId = tiedPlayers[0];
+          console.log(`[determine-motm] Tie detected for match ${match.id}. Players: ${tiedPlayers.join(', ')}. Deterministically selected ${motmPlayerId}.`);
+        }
+
         // 5. Award MOTM
         console.log(`[determine-motm] Awarding MOTM for match ${match.id} to player ${motmPlayerId} with ${maxVotes} votes.`);
         const { error: insertError } = await supabaseClient
@@ -131,7 +159,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      message: `Processed ${eligibleMatches.length} finished matches. Awarded MOTM for ${awardedMatches.length} matches.`,
+      message: `Processed ${processedCount} finished matches. Awarded MOTM for ${awardedMatches.length} matches.`,
       awardedMatches: awardedMatches,
     }), {
       status: 200,

@@ -5,9 +5,10 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-console.log("Initializing Supabase client...");
-console.log("SUPABASE_URL:", SUPABASE_URL ? "Loaded" : "NOT LOADED");
-console.log("SUPABASE_PUBLISHABLE_KEY:", SUPABASE_PUBLISHABLE_KEY ? "Loaded" : "NOT LOADED");
+// Removed console.log statements for production readiness
+// console.log("Initializing Supabase client...");
+// console.log("SUPABASE_URL:", SUPABASE_URL ? "Loaded" : "NOT LOADED");
+// console.log("SUPABASE_PUBLISHABLE_KEY:", SUPABASE_PUBLISHABLE_KEY ? "Loaded" : "NOT LOADED");
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";

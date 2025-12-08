@@ -23,13 +23,19 @@ const handler = async (req: Request): Promise<Response> => {
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       console.error('Error: Missing authorization header');
-      throw new Error('Missing authorization header');
+      return new Response(JSON.stringify({ error: 'Missing authorization header', success: false }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     const token = authHeader.replace('Bearer ', '');
     if (!token) {
       console.error('Error: Missing JWT token after Bearer removal');
-      throw new Error('Missing JWT token');
+      return new Response(JSON.stringify({ error: 'Missing JWT token', success: false }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     // Create a Supabase client with the SERVICE_ROLE_KEY for server-side operations
@@ -50,13 +56,19 @@ const handler = async (req: Request): Promise<Response> => {
     
     if (userError || !user) {
       console.error('Auth error during getUser:', userError?.message || 'User not found');
-      throw new Error('Unauthorized: Invalid or expired token');
+      return new Response(JSON.stringify({ error: 'Unauthorized: Invalid or expired token', success: false }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     // Check if email is verified
     if (!user.email_confirmed_at) {
       console.error('Email not verified for user:', user.id);
-      throw new Error('Email not verified. Please verify your email before voting.');
+      return new Response(JSON.stringify({ error: 'Email not verified. Please verify your email before voting.', success: false }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     const { playerName, matchDetails }: VoteConfirmationRequest = await req.json();
@@ -66,6 +78,21 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`  Player: ${playerName}, Match: ${matchDetails}`);
     console.log(`  RESEND_API_KEY is ${RESEND_API_KEY ? 'set' : 'NOT SET'}`);
 
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not set. Cannot send email.');
+      return new Response(JSON.stringify({ error: 'Email service not configured.', success: false }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (!user.email) {
+      console.error('User email is null or undefined. Cannot send email.');
+      return new Response(JSON.stringify({ error: 'User email not available.', success: false }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
     // Send email using Resend API
     const emailResponse = await fetch('https://api.resend.com/emails', {
@@ -76,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: 'Aruogba League <onboarding@resend.dev>',
-        to: [user.email!],
+        to: [user.email], // Ensure user.email is not null
         subject: 'Vote Confirmation - Player of the Match',
         html: `
           <!DOCTYPE html>
@@ -121,8 +148,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!emailResponse.ok) {
       const errorData = await emailResponse.json();
-      console.error(`Resend API error: Status ${emailResponse.status}, Body:`, errorData);
-      throw new Error(`Resend API error: ${errorData.message || 'Unknown error'}`);
+      console.error(`Resend API error: Status ${emailResponse.status}, Body:`, JSON.stringify(errorData));
+      return new Response(JSON.stringify({ 
+        error: `Failed to send confirmation email: ${errorData.message || 'Unknown error'}`,
+        success: false 
+      }), {
+        status: emailResponse.status,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     const emailData = await emailResponse.json();
