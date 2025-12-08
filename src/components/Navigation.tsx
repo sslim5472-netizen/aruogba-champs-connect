@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Trophy, Users, Calendar, BarChart3, Vote, Radio, LogIn, LogOut, Award } from "lucide-react"; // Removed Film icon
+import { Trophy, Users, Calendar, BarChart3, Vote, Radio, LogIn, LogOut, Award, Film } from "lucide-react"; // Added Film icon
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ const Navigation = () => {
     { path: "/live", label: "Live", icon: Radio },
     { path: "/stats", label: "Stats", icon: BarChart3 },
     { path: "/voting", label: "Vote", icon: Vote },
-    // Removed Media link
+    { path: "/media", label: "Media", icon: Film }, // Re-added Media link
     { path: "/motm", label: "MOTM", icon: Award },
   ];
 
