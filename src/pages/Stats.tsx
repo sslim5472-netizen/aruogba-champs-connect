@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Trophy, Target, Shield, AlertTriangle, AlertOctagon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query"; // Import useQueryClient
 import { getTeamLogo } from "@/lib/teamUtils"; // Import the new utility
 
 interface TeamStat {
@@ -28,6 +28,7 @@ interface PlayerStat {
 
 const Stats = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient(); // Initialize queryClient
   const [loadingStats, setLoadingStats] = useState(true);
   const [topScorers, setTopScorers] = useState<PlayerStat[]>([]);
   const [topAssists, setTopAssists] = useState<PlayerStat[]>([]);
@@ -55,6 +56,29 @@ const Stats = () => {
       return data as TeamStat[];
     },
   });
+
+  // Realtime subscription for team stats updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('team-stats-updates-stats-page')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'teams',
+        },
+        () => {
+          console.log("Realtime update: teams table changed, refetching league standings for stats page.");
+          queryClient.invalidateQueries({ queryKey: ['league-standings'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Calculate standings and sort
   const standings = teamsData

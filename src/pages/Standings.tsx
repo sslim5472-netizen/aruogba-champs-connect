@@ -1,8 +1,9 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Shield, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query"; // Import useQueryClient
 import { Button } from "@/components/ui/button";
 import { getTeamLogo } from "@/lib/teamUtils"; // Import the new utility
 
@@ -19,6 +20,7 @@ interface TeamStat {
 
 const Standings = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient(); // Initialize queryClient
 
   const getTeamSlug = (teamName: string) => {
     return teamName.toLowerCase().replace(/\s+/g, '-');
@@ -35,6 +37,29 @@ const Standings = () => {
       return data as TeamStat[];
     },
   });
+
+  // Realtime subscription for team stats updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('team-stats-updates-standings-page')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'teams',
+        },
+        () => {
+          console.log("Realtime update: teams table changed, refetching league standings.");
+          queryClient.invalidateQueries({ queryKey: ['league-standings-full'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const standings = teamsData
     ? teamsData
