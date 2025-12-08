@@ -15,6 +15,7 @@ interface TeamStat {
   losses: number;
   goals_for: number;
   goals_against: number;
+  played: number; // Added played column
 }
 
 interface PlayerStat {
@@ -46,7 +47,7 @@ const Stats = () => {
       console.log("Fetching league standings...");
       const { data, error } = await supabase
         .from("teams")
-        .select("id, name, logo_url, wins, draws, losses, goals_for, goals_against")
+        .select("id, name, logo_url, wins, draws, losses, goals_for, goals_against, played") // Select 'played'
         .order("name");
       if (error) {
         console.error("Error fetching league standings:", error);
@@ -85,7 +86,6 @@ const Stats = () => {
     ? teamsData
         .map(team => ({
             ...team,
-            played: (team.wins || 0) + (team.draws || 0) + (team.losses || 0),
             points: (team.wins || 0) * 3 + (team.draws || 0) * 1,
             goal_difference: (team.goals_for || 0) - (team.goals_against || 0),
         }))

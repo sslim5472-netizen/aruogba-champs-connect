@@ -16,6 +16,7 @@ interface TeamWithPlayerCount {
   logo_url: string;
   color: string;
   player_count: number;
+  played: number; // Added played column
 }
 
 const Index = () => {
@@ -24,7 +25,7 @@ const Index = () => {
     queryFn: async () => {
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
-        .select("id, name, captain_name, logo_url, color")
+        .select("id, name, captain_name, logo_url, color, played") // Select 'played'
         .order("name");
 
       if (teamsError) throw teamsError;
