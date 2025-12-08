@@ -5,22 +5,62 @@ import { Award, Star } from "lucide-react"; // Added Star icon
 import { format } from "date-fns";
 
 const MotmAwards = () => {
-  const { data: awards, isLoading } = useQuery({
+  const { data: awards, isLoading, error } = useQuery({ // Added error here for debugging
     queryKey: ["motm-awards-public"],
     queryFn: async () => {
+      console.log("Fetching MOTM awards for public page..."); // Added log
       const { data, error } = await supabase
         .from('motm_awards')
         .select(`
-          *,
-          match:matches!inner(*, home_team:teams!matches_home_team_id_fkey(name, logo_url), away_team:teams!matches_away_team_id_fkey(name, logo_url)),
-          player:players!inner(*, team:teams!inner(name, color, logo_url, photo_url))
+          id,
+          created_at,
+          match_id,
+          player_id,
+          player:players(
+            name,
+            photo_url,
+            team:teams(name, color, logo_url)
+          ),
+          match:matches(
+            match_date,
+            home_score,
+            away_score,
+            home_team:teams!matches_home_team_id_fkey(name),
+            away_team:teams!matches_away_team_id_fkey(name)
+          )
         `)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching MOTM awards:", error); // Added error log
+        throw error;
+      }
+      console.log("Fetched MOTM awards data:", data); // Added data log
       return data;
     },
   });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="container mx-auto px-4 py-12 text-center">
+          <div className="text-muted-foreground">Loading winners...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) { // Display error if query failed
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="container mx-auto px-4 py-12 text-center">
+          <div className="text-destructive">Error loading MOTM awards: {error.message}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -37,9 +77,7 @@ const MotmAwards = () => {
           </p>
         </div>
 
-        {isLoading ? (
-          <div className="text-center text-muted-foreground">Loading winners...</div>
-        ) : awards?.length === 0 ? (
+        {awards?.length === 0 ? (
           <div className="text-center text-muted-foreground glass-card p-12 rounded-xl">
             No awards have been given out yet.
           </div>
