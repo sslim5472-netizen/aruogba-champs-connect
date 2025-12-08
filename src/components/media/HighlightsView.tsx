@@ -18,7 +18,7 @@ const HighlightsView = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('teams')
-        .select('*')
+        .select('id, name') // Select only necessary columns
         .order('name');
       
       if (error) throw error;
@@ -32,10 +32,14 @@ const HighlightsView = () => {
       let query = supabase
         .from('highlights')
         .select(`
-          *,
-          team:teams(*),
+          id,
+          title,
+          description,
+          video_url,
+          thumbnail_url,
+          created_at,
+          team:teams(name, color),
           match:matches(
-            *,
             home_team:teams!matches_home_team_id_fkey(name),
             away_team:teams!matches_away_team_id_fkey(name)
           )
@@ -84,7 +88,7 @@ const HighlightsView = () => {
           {highlights?.map((highlight) => (
             <div key={highlight.id} className="glass-card rounded-xl overflow-hidden group hover:glow-effect transition-all">
               <div className="relative aspect-video bg-muted">
-                {highlight.video_url.includes('youtube') || highlight.video_url.includes('youtu.be') ? (
+                {highlight.video_url && (highlight.video_url.includes('youtube') || highlight.video_url.includes('youtu.be')) ? (
                   <iframe
                     src={getYouTubeEmbedUrl(highlight.video_url)}
                     className="w-full h-full"
@@ -92,6 +96,8 @@ const HighlightsView = () => {
                     allowFullScreen
                     title={highlight.title}
                   />
+                ) : highlight.thumbnail_url ? (
+                  <img src={highlight.thumbnail_url} alt={highlight.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Play className="w-16 h-16 text-muted-foreground" />
@@ -105,7 +111,7 @@ const HighlightsView = () => {
                   <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{highlight.description}</p>
                 )}
                 
-                {highlight.match && (
+                {highlight.match && highlight.match.home_team && highlight.match.away_team && (
                   <div className="text-xs text-muted-foreground">
                     {highlight.match.home_team.name} vs {highlight.match.away_team.name}
                   </div>

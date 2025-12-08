@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription, // Import DialogDescription
 } from "@/components/ui/dialog";
 
 // Simplified schema: empty string inputs will be converted to null for the database
@@ -78,7 +79,7 @@ export const HighlightsManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("highlights")
-        .select("*")
+        .select("id, title, description, video_url, thumbnail_url, match_id, team_id") // Explicitly select columns
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Highlight[];
@@ -257,6 +258,9 @@ export const HighlightsManagement = () => {
         <DialogContent className="sm:max-w-[600px] glass-card">
           <DialogHeader>
             <DialogTitle>{editingHighlight ? "Edit Highlight" : "Create New Highlight"}</DialogTitle>
+            <DialogDescription>
+              {editingHighlight ? "Update the details for this match highlight." : "Add a new match highlight with video or image content."}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

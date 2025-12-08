@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription, // Import DialogDescription
 } from "@/components/ui/dialog";
 
 const photoSchema = z.object({
@@ -85,7 +86,7 @@ export const PhotosManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("gallery_photos")
-        .select("*")
+        .select("id, title, description, image_url, match_id, player_id, team_id") // Explicitly select columns
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Photo[];
@@ -228,6 +229,9 @@ export const PhotosManagement = () => {
         <DialogContent className="sm:max-w-[600px] glass-card">
           <DialogHeader>
             <DialogTitle>{editingPhoto ? "Edit Photo" : "Add New Photo"}</DialogTitle>
+            <DialogDescription>
+              {editingPhoto ? "Update the details for this gallery photo." : "Upload a new photo to the gallery."}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

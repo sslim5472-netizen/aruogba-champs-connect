@@ -18,9 +18,17 @@ const LiveMatch = () => {
       const { data, error } = await supabase
         .from('matches')
         .select(`
-          *,
-          home_team:teams!matches_home_team_id_fkey(*),
-          away_team:teams!matches_away_team_id_fkey(*)
+          id,
+          home_team_id,
+          away_team_id,
+          match_date,
+          venue,
+          status,
+          home_score,
+          away_score,
+          live_stream_url,
+          home_team:teams!matches_home_team_id_fkey(name, logo_url),
+          away_team:teams!matches_away_team_id_fkey(name, logo_url)
         `)
         .eq('status', 'live')
         .single();
@@ -38,7 +46,10 @@ const LiveMatch = () => {
       const { data, error } = await supabase
         .from('match_events')
         .select(`
-          *,
+          id,
+          event_type,
+          minute,
+          description,
           player:players(name, team_id)
         `)
         .eq('match_id', liveMatchId)
