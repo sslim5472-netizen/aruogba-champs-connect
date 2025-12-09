@@ -111,7 +111,7 @@ const Voting = () => {
       const { data, error } = await supabase
         .from('players')
         .select('*, team:teams(name, color)') // Fetch team color for styling
-        .in('team_id', [votableMatch.home_team_id, votableMatch.home_team_id]); // Corrected to include both home and away team IDs
+        .in('team_id', [votableMatch.home_team_id, votableMatch.away_team_id]); // Corrected to include both home and away team IDs
       
       if (error) throw error;
       return data;
