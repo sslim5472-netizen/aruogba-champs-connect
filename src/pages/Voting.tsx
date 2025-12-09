@@ -182,12 +182,12 @@ const Voting = () => {
       if (!result.success) {
         throw new Error(result.error.errors[0].message);
       }
-
-      // Re-check for existing vote right before insertion to prevent race conditions
+      
+      // The pre-check in handleVote should prevent this, but keep this as a final safeguard
       const { data: existingVote, error: checkError } = await supabase
         .from('match_votes')
         .select('id')
-        .eq('user_id', currentUser.id) // Use currentUser.id for consistency
+        .eq('user_id', currentUser.id)
         .eq('match_id', votableMatch.id)
         .maybeSingle();
       
@@ -239,10 +239,33 @@ const Voting = () => {
     },
   });
 
-  const handleVote = () => {
-    if (selectedPlayer) {
-      voteMutation.mutate(selectedPlayer);
+  const handleVote = async () => { // Make it async
+    if (!selectedPlayer || !votableMatch || !user) {
+      toast.error("Please select a player and ensure you are logged in.");
+      return;
     }
+
+    // Perform the check for existing vote immediately before mutation
+    const { data: existingVote, error: checkError } = await supabase
+      .from('match_votes')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('match_id', votableMatch.id)
+      .maybeSingle();
+    
+    if (checkError) {
+      console.error("Error during pre-vote check:", checkError);
+      toast.error("Failed to verify your voting status. Please try again.");
+      return;
+    }
+    if (existingVote) {
+      toast.error('You have already voted for this match.');
+      setHasVoted(true); // Ensure state is correct
+      return;
+    }
+
+    // If no existing vote, proceed with mutation
+    voteMutation.mutate(selectedPlayer);
   };
 
   // Realtime subscription for match_votes
