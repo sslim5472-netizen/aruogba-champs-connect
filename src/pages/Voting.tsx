@@ -187,7 +187,7 @@ const Voting = () => {
       const { data: existingVote, error: checkError } = await supabase
         .from('match_votes')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', currentUser.id) // Use currentUser.id for consistency
         .eq('match_id', votableMatch.id)
         .maybeSingle();
       
@@ -204,7 +204,7 @@ const Voting = () => {
         .insert({
           match_id: votableMatch.id,
           player_id: playerId,
-          user_id: user.id,
+          user_id: currentUser.id, // Use currentUser.id for consistency
         });
       
       if (error) throw error;
