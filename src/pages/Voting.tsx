@@ -192,6 +192,11 @@ const Voting = () => {
       if (alreadyVoted) {
         throw new Error('You have already voted for this match.');
       }
+
+      if (!supabase.supabaseKey) {
+        console.error("Supabase API key is not available on the client.");
+        throw new Error("Supabase API key is missing. Please ensure environment variables are set correctly.");
+      }
       
       const { error } = await supabase
         .from('match_votes')
@@ -212,6 +217,7 @@ const Voting = () => {
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+          'apikey': supabase.supabaseKey, // Explicitly add the API key
         }
       });
 
