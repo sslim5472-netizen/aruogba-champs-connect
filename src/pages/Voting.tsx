@@ -111,7 +111,7 @@ const Voting = () => {
       const { data, error } = await supabase
         .from('players')
         .select('*, team:teams(name, color)') // Fetch team color for styling
-        .in('team_id', [votableMatch.home_team_id, votableMatch.away_team_id]); // Corrected to include both home and away team IDs
+        .in('team_id', [votableMatch.home_team_id, votableMatch.home_team_id]); // Corrected to include both home and away team IDs
       
       if (error) throw error;
       return data;
@@ -156,6 +156,13 @@ const Voting = () => {
   const leadingPlayerId = Object.keys(voteResults || {}).reduce((a, b) => 
     (voteResults?.[b] || 0) > (voteResults?.[a] || 0) ? a : b, null as string | null
   );
+
+  // Effect to refetch vote results when hasVoted becomes true
+  useEffect(() => {
+    if (hasVoted && votableMatch?.id) {
+      queryClient.invalidateQueries({ queryKey: ['vote-results', votableMatch.id] });
+    }
+  }, [hasVoted, votableMatch?.id, queryClient]);
 
   const voteMutation = useMutation({
     mutationFn: async (playerId: string) => {
@@ -223,9 +230,9 @@ const Voting = () => {
       return { playerId };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vote-results', votableMatch?.id] });
       setHasVoted(true); // Set hasVoted to true on successful vote
       toast.success('Vote submitted successfully! Check your email for confirmation.');
+      // The invalidateQueries will now be handled by the useEffect above
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to submit vote');
