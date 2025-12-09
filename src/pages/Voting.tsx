@@ -135,16 +135,15 @@ const Voting = () => {
     queryFn: async () => {
       if (!votableMatch) return {};
       
+      // Use the new RPC function to get vote results
       const { data, error } = await supabase
-        .from('match_votes')
-        .select('player_id')
-        .eq('match_id', votableMatch.id);
+        .rpc('get_match_vote_results', { p_match_id: votableMatch.id });
       
       if (error) throw error;
       
       const voteCounts: Record<string, number> = {};
       data.forEach((vote) => {
-        voteCounts[vote.player_id] = (voteCounts[vote.player_id] || 0) + 1;
+        voteCounts[vote.player_id] = (voteCounts[vote.player_id] || 0) + (vote.vote_count || 0);
       });
       
       return voteCounts;
