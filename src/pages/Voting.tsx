@@ -187,12 +187,6 @@ const Voting = () => {
         throw new Error(result.error.errors[0].message);
       }
       
-      // Final check for existing vote right before insertion to prevent race conditions
-      const alreadyVoted = await checkUserVote(votableMatch.id, currentUser.id);
-      if (alreadyVoted) {
-        throw new Error('You have already voted for this match.');
-      }
-      
       const { error } = await supabase
         .from('match_votes')
         .insert({
@@ -200,8 +194,18 @@ const Voting = () => {
           player_id: playerId,
           user_id: currentUser.id,
         });
-      
-      if (error) throw error;
+
+      if (error) {
+        if (error.code === '23505') { // Unique constraint violation
+          console.warn("Attempted to insert duplicate vote, caught by DB constraint.");
+          setHasVoted(true); // Immediately update state if DB says it's a duplicate
+          throw new Error('You have already voted for this match.');
+        }
+        throw error; // Re-throw other errors
+      }
+
+      // If insert was successful, immediately update hasVoted
+      setHasVoted(true);
 
       const selectedPlayerData = players?.find(p => p.id === playerId);
       
@@ -228,7 +232,6 @@ const Voting = () => {
       await queryClient.invalidateQueries({ queryKey: ["votable-match", user?.id] });
       await queryClient.invalidateQueries({ queryKey: ['vote-results', votableMatch?.id] });
       await queryClient.invalidateQueries({ queryKey: ['votable-match-notification', user?.id] }); // Invalidate notification query
-      setHasVoted(true); // Explicitly set hasVoted to true
       toast.success('Vote submitted successfully! Check your email for confirmation.');
     },
     onError: (error: any) => {
