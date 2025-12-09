@@ -78,30 +78,34 @@ const Voting = () => {
     refetchInterval: 15 * 1000, // Refresh every 15 seconds to check for new votable matches
   });
 
-  // Check if user has already voted for the current votable match
-  useEffect(() => {
-    const checkUserVote = async () => {
-      if (user && votableMatch) {
-        const { data: existingVote, error } = await supabase
-          .from('match_votes')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('match_id', votableMatch.id)
-          .maybeSingle(); // Use maybeSingle to avoid 406 errors if no vote exists
-        
-        if (error) { // If maybeSingle returns an error, it's a real database error
-          console.error("Error checking for existing vote:", error);
-          toast.error("Failed to check your previous votes. Please try again.");
-          setHasVoted(false); // Assume no vote if there's an error fetching
-        } else {
-          setHasVoted(!!existingVote);
-        }
+  // Reusable function to check if user has voted for a specific match
+  const checkUserVote = useCallback(async (currentMatchId: string | null, currentUserId: string | null) => {
+    if (currentUserId && currentMatchId) {
+      const { data: existingVote, error } = await supabase
+        .from('match_votes')
+        .select('id')
+        .eq('user_id', currentUserId)
+        .eq('match_id', currentMatchId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Error checking for existing vote:", error);
+        toast.error("Failed to check your previous votes. Please try again.");
+        return false;
       } else {
-        setHasVoted(false);
+        return !!existingVote;
       }
+    }
+    return false;
+  }, []);
+
+  // Initial check and update of hasVoted state
+  useEffect(() => {
+    const runCheck = async () => {
+      setHasVoted(await checkUserVote(votableMatch?.id || null, user?.id || null));
     };
-    checkUserVote();
-  }, [user, votableMatch]);
+    runCheck();
+  }, [user, votableMatch, checkUserVote]);
 
   const { data: players, isLoading: playersLoading } = useQuery({
     queryKey: ['match-players', votableMatch?.id],
@@ -111,7 +115,7 @@ const Voting = () => {
       const { data, error } = await supabase
         .from('players')
         .select('*, team:teams(name, color)') // Fetch team color for styling
-        .in('team_id', [votableMatch.home_team_id, votableMatch.away_team_id]); // Corrected to include both home and away team IDs
+        .in('team_id', [votableMatch.home_team_id, votableMatch.away_team_id]);
       
       if (error) throw error;
       return data;
@@ -167,7 +171,7 @@ const Voting = () => {
   const voteMutation = useMutation({
     mutationFn: async (playerId: string) => {
       if (!votableMatch) throw new Error('No match available for voting.');
-      if (!user || !session) throw new Error('You must be logged in to vote.'); // Ensure session exists
+      if (!user || !session) throw new Error('You must be logged in to vote.');
 
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser?.email_confirmed_at) {
@@ -183,19 +187,9 @@ const Voting = () => {
         throw new Error(result.error.errors[0].message);
       }
       
-      // The pre-check in handleVote should prevent this, but keep this as a final safeguard
-      const { data: existingVote, error: checkError } = await supabase
-        .from('match_votes')
-        .select('id')
-        .eq('user_id', currentUser.id)
-        .eq('match_id', votableMatch.id)
-        .maybeSingle();
-      
-      if (checkError) {
-        console.error("Error re-checking for existing vote:", checkError);
-        throw new Error("Failed to verify your voting status. Please try again.");
-      }
-      if (existingVote) {
+      // Final check for existing vote right before insertion to prevent race conditions
+      const alreadyVoted = await checkUserVote(votableMatch.id, currentUser.id);
+      if (alreadyVoted) {
         throw new Error('You have already voted for this match.');
       }
       
@@ -204,21 +198,20 @@ const Voting = () => {
         .insert({
           match_id: votableMatch.id,
           player_id: playerId,
-          user_id: currentUser.id, // Use currentUser.id for consistency
+          user_id: currentUser.id,
         });
       
       if (error) throw error;
 
       const selectedPlayerData = players?.find(p => p.id === playerId);
       
-      // Pass the actual JWT from the session
       const { error: emailError } = await supabase.functions.invoke('send-vote-confirmation', {
         body: {
           playerName: selectedPlayerData?.name || 'Unknown Player',
           matchDetails: `${votableMatch.home_team.name} ${votableMatch.home_score} - ${votableMatch.away_team.name}`,
         },
         headers: {
-          Authorization: `Bearer ${session.access_token}`, // Use the actual access token
+          Authorization: `Bearer ${session.access_token}`,
         }
       });
 
@@ -229,42 +222,33 @@ const Voting = () => {
 
       return { playerId };
     },
-    onSuccess: () => {
-      setHasVoted(true); // Set hasVoted to true on successful vote
+    onSuccess: async () => {
+      // Invalidate all relevant queries to ensure UI is up-to-date
+      await queryClient.invalidateQueries({ queryKey: ["votable-match", user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['vote-results', votableMatch?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['votable-match-notification', user?.id] }); // Invalidate notification query
+      setHasVoted(true); // Explicitly set hasVoted to true
       toast.success('Vote submitted successfully! Check your email for confirmation.');
-      // The invalidateQueries will now be handled by the useEffect above
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to submit vote');
     },
   });
 
-  const handleVote = async () => { // Make it async
+  const handleVote = async () => {
     if (!selectedPlayer || !votableMatch || !user) {
       toast.error("Please select a player and ensure you are logged in.");
       return;
     }
 
-    // Perform the check for existing vote immediately before mutation
-    const { data: existingVote, error: checkError } = await supabase
-      .from('match_votes')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('match_id', votableMatch.id)
-      .maybeSingle();
-    
-    if (checkError) {
-      console.error("Error during pre-vote check:", checkError);
-      toast.error("Failed to verify your voting status. Please try again.");
-      return;
-    }
-    if (existingVote) {
+    // Immediate pre-check for existing vote before initiating mutation
+    const alreadyVoted = await checkUserVote(votableMatch.id, user.id);
+    if (alreadyVoted) {
       toast.error('You have already voted for this match.');
       setHasVoted(true); // Ensure state is correct
       return;
     }
 
-    // If no existing vote, proceed with mutation
     voteMutation.mutate(selectedPlayer);
   };
 
@@ -283,9 +267,9 @@ const Voting = () => {
           filter: `match_id=eq.${votableMatch.id}`,
         },
         () => {
-          if (hasVoted) { // Only invalidate if user has already voted to see live updates
-            queryClient.invalidateQueries({ queryKey: ['vote-results', votableMatch.id] });
-          }
+          // Invalidate vote results and re-check user vote status on any change
+          queryClient.invalidateQueries({ queryKey: ['vote-results', votableMatch.id] });
+          checkUserVote(votableMatch.id, user?.id || null).then(setHasVoted);
         }
       )
       .subscribe();
@@ -293,7 +277,7 @@ const Voting = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, votableMatch, hasVoted]);
+  }, [queryClient, votableMatch, user?.id, checkUserVote]); // Added checkUserVote to dependencies
 
   if (authLoading || matchLoading || playersLoading || votesLoading) {
     return (
