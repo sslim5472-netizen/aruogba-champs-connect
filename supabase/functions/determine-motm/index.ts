@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
-const MOTM_VOTE_THRESHOLD = 10;
 const MOTM_ELIGIBILITY_WINDOW_MINUTES = 8; // Matches user's requirement
 
 const corsHeaders = {
@@ -131,7 +130,7 @@ serve(async (req) => {
         }
       }
 
-      if (motmPlayerId && maxVotes >= MOTM_VOTE_THRESHOLD) {
+      if (motmPlayerId) { // Removed the MOTM_VOTE_THRESHOLD check
         // Apply deterministic tie-breaker if there are multiple players with max votes
         if (tiedPlayers.length > 1) {
           // Sort by player_id (UUID) lexicographically to ensure deterministic tie-breaking
@@ -153,7 +152,7 @@ serve(async (req) => {
           console.log(`[determine-motm] Successfully awarded MOTM for match ${match.id}.`);
         }
       } else {
-        console.log(`[determine-motm] No eligible MOTM winner for match ${match.id}. Highest votes: ${maxVotes} (threshold: ${MOTM_VOTE_THRESHOLD}).`);
+        console.log(`[determine-motm] No eligible MOTM winner for match ${match.id}. No votes or no clear winner.`);
       }
     }
 
