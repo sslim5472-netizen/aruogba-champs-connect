@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/Navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamsManagement } from "@/components/admin/TeamsManagement";
@@ -7,11 +9,50 @@ import { MatchesManagement } from "@/components/admin/MatchesManagement";
 import { PhotosManagement } from "@/components/admin/PhotosManagement";
 import { MotmManagement } from "@/components/admin/MotmManagement";
 import { LeagueStandingsManagement } from "@/components/admin/LeagueStandingsManagement";
-import { Shield } from "lucide-react";
+import { Shield, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const AdminManagement = () => {
+  const { user, userRole, signOut, loading } = useAuth();
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && !loading) {
+      if (!user) {
+        navigate("/admin/login", { replace: true });
+      } else if (userRole !== 'admin') {
+        toast.error("Access denied. Admin privileges required.");
+        navigate("/", { replace: true });
+      }
+    }
+  }, [user, userRole, loading, navigate, mounted]);
+
+  if (loading || !mounted) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="container mx-auto px-4 py-12 text-center">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is null or not admin, the effect above handles navigation
+  if (!user || userRole !== 'admin') {
+    return null;
+  }
+
+  const handleSignOut = async () => {
+    await signOut();
+    // signOut handles navigation and reload, so no further action needed here
+  };
 
   return (
     <div className="min-h-screen">
@@ -30,14 +71,24 @@ const AdminManagement = () => {
                   <p className="text-sm text-muted-foreground">Full CRUD operations for all tournament data</p>
                 </div>
               </div>
+              
+              <Button 
+                variant="outline" 
+                onClick={handleSignOut}
+                className="border-destructive/50 hover:bg-destructive/10"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
             </div>
           </div>
 
           <Tabs defaultValue="teams" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 glass-card"> {/* Adjusted grid-cols to 6 */}
+            <TabsList className="grid w-full grid-cols-6 glass-card"> {/* Changed grid-cols from 7 to 6 */}
               <TabsTrigger value="teams">Teams</TabsTrigger>
               <TabsTrigger value="players">Players</TabsTrigger>
               <TabsTrigger value="matches">Matches</TabsTrigger>
+              {/* Removed Highlights TabTrigger */}
               <TabsTrigger value="photos">Photos</TabsTrigger>
               <TabsTrigger value="motm">MOTM</TabsTrigger>
               <TabsTrigger value="standings">Standings</TabsTrigger>
@@ -54,6 +105,8 @@ const AdminManagement = () => {
             <TabsContent value="matches">
               <MatchesManagement />
             </TabsContent>
+
+            {/* Removed Highlights TabContent */}
             
             <TabsContent value="photos">
               <PhotosManagement />

@@ -1,37 +1,90 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/Navigation";
-import { Shield, Users, Calendar, Trophy } from "lucide-react";
+import { Shield, Users, Calendar, Trophy, LogOut } from "lucide-react"; // Removed Video icon
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
 
 const Admin = () => {
+  const { user, userRole, firstName, lastName, signOut, loading } = useAuth();
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && !loading) {
+      if (!user) {
+        // Redirect to login if not authenticated
+        navigate("/admin/login", { replace: true });
+      } else if (userRole !== 'admin') {
+        toast.error("Access denied. Admin privileges required.");
+        navigate("/", { replace: true });
+      }
+    }
+  }, [user, userRole, loading, navigate, mounted]);
+
+  if (loading || !mounted) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="container mx-auto px-4 py-12 text-center">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is null or not admin, the effect above handles navigation
+  // This explicit check acts as a safeguard
+  if (!user || userRole !== 'admin') {
+    return null; // Or a minimal UI state while navigating
+  }
+
+  const handleSignOut = async () => {
+    await signOut();
+    // signOut handles navigation and reload, so no further action needed here
+  };
 
   const adminCards = [
     {
       title: "Full CRUD Management",
-      description: "Complete control over teams, players, matches and photos",
+      description: "Complete control over teams, players, matches and photos", // Updated description
       icon: Shield,
       path: "/admin/manage",
+      roles: ['admin'],
     },
     {
       title: "Teams & Players",
       description: "View team rosters and player statistics",
       icon: Users,
       path: "/teams",
+      roles: ['admin', 'captain'],
     },
     {
       title: "Matches",
       description: "View match fixtures and scores",
       icon: Calendar,
       path: "/fixtures",
+      roles: ['admin'],
     },
     {
       title: "Live Match",
       description: "Update live match scores and events",
       icon: Trophy,
       path: "/live",
+      roles: ['admin'],
     },
+    // Removed Highlights card
   ];
+
+  const accessibleCards = adminCards.filter(card => 
+    card.roles.includes(userRole)
+  );
 
   return (
     <div className="min-h-screen">
@@ -49,10 +102,19 @@ const Admin = () => {
                 <div>
                   <h1 className="text-3xl font-heading gradient-text">Admin Dashboard</h1>
                   <p className="text-muted-foreground capitalize">
-                    Welcome to the admin panel.
+                    Welcome, {user ? (firstName && lastName ? `${firstName} ${lastName}` : user.email) : 'Guest'} (Role: {userRole || 'viewer'})
                   </p>
                 </div>
               </div>
+              
+              <Button 
+                variant="outline" 
+                onClick={handleSignOut}
+                className="border-destructive/50 hover:bg-destructive/10"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
             </div>
 
             <div className="text-sm text-muted-foreground">
@@ -62,7 +124,7 @@ const Admin = () => {
 
           {/* Management Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-scale-in">
-            {adminCards.map((card) => {
+            {accessibleCards.map((card) => {
               const Icon = card.icon;
               return (
                 <Card
@@ -84,6 +146,14 @@ const Admin = () => {
               );
             })}
           </div>
+
+          {accessibleCards.length === 0 && (
+            <div className="glass-card p-12 rounded-xl text-center">
+              <p className="text-muted-foreground">
+                No management options available. Contact an administrator to assign you a role.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

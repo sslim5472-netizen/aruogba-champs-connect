@@ -1,1 +1,0 @@
-DROP FUNCTION IF EXISTS public.get_match_vote_results(uuid);

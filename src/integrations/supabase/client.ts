@@ -10,9 +10,8 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export const supabase: SupabaseClient<Database> = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    flowType: 'pkce',
-    autoRefreshToken: true,
+    storage: localStorage,
     persistSession: true,
-    detectSessionInUrl: true,
-  },
+    autoRefreshToken: true,
+  }
 });

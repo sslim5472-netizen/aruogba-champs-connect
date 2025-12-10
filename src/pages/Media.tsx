@@ -30,9 +30,12 @@ const Media = () => {
         </div>
 
         <Tabs defaultValue="photos" className="space-y-6" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-1 glass-card max-w-md mx-auto">
+          <TabsList className="grid w-full grid-cols-1 glass-card max-w-md mx-auto"> {/* Changed grid-cols to 1 */}
+            {/* Removed Highlights TabTrigger */}
             <TabsTrigger value="photos">Photo Gallery</TabsTrigger>
           </TabsList>
+
+          {/* Removed HighlightsContent */}
           
           <TabsContent value="photos">
             <PhotosView />

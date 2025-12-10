@@ -1,0 +1,190 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'; // Updated to 2.45.0
+
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+interface VoteConfirmationRequest {
+  playerName: string;
+  matchDetails: string;
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      console.error('Error: Missing authorization header');
+      return new Response(JSON.stringify({ error: 'Missing authorization header', success: false }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    if (!token) {
+      console.error('Error: Missing JWT token after Bearer removal');
+      return new Response(JSON.stringify({ error: 'Missing JWT token', success: false }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Create a Supabase client with the SERVICE_ROLE_KEY for server-side operations
+    // This client will be used to verify the user's JWT
+    const supabaseServiceRoleClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', // Use service role key
+      {
+        auth: {
+          persistSession: false, // Important for server-side functions
+        },
+      }
+    );
+
+    // Verify the user's JWT using the service role client
+    // This will return the user object if the token is valid
+    const { data: { user }, error: userError } = await supabaseServiceRoleClient.auth.getUser(token);
+    
+    if (userError || !user) {
+      console.error('Auth error during getUser:', userError?.message || 'User not found');
+      return new Response(JSON.stringify({ error: 'Unauthorized: Invalid or expired token', success: false }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Check if email is verified
+    if (!user.email_confirmed_at) {
+      console.error('Email not verified for user:', user.id);
+      return new Response(JSON.stringify({ error: 'Email not verified. Please verify your email before voting.', success: false }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const { playerName, matchDetails }: VoteConfirmationRequest = await req.json();
+
+    console.log('Attempting to send vote confirmation email.');
+    console.log(`  Recipient: ${user.email}`);
+    console.log(`  Player: ${playerName}, Match: ${matchDetails}`);
+    console.log(`  RESEND_API_KEY is ${RESEND_API_KEY ? 'set' : 'NOT SET'}`);
+
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not set. Cannot send email.');
+      return new Response(JSON.stringify({ error: 'Email service not configured.', success: false }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (!user.email) {
+      console.error('User email is null or undefined. Cannot send email.');
+      return new Response(JSON.stringify({ error: 'User email not available.', success: false }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Send email using Resend API
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Aruogba League <onboarding@resend.dev>',
+        to: [user.email], // Ensure user.email is not null
+        subject: 'Vote Confirmation - Player of the Match',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Vote Confirmation</title>
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 28px;">Vote Confirmed!</h1>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+              <p style="font-size: 16px; margin-bottom: 20px;">
+                Thank you for voting in the Aruogba League Player of the Match poll!
+              </p>
+              
+              <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+                <h2 style="margin: 0 0 10px 0; font-size: 20px; color: #667eea;">Your Vote</h2>
+                <p style="margin: 5px 0;"><strong>Player:</strong> ${playerName}</p>
+                <p style="margin: 5px 0;"><strong>Match:</strong> ${matchDetails}</p>
+              </div>
+              
+              <p style="font-size: 14px; color: #666; margin-top: 30px;">
+                Your vote has been recorded and will contribute to determining the Player of the Match. 
+                Results will be visible after the voting period ends.
+              </p>
+              
+              <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <p style="font-size: 12px; color: #999; margin: 0;">
+                  Aruogba League - Celebrating Excellence in Football
+                </p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
+      }),
+    });
+
+    if (!emailResponse.ok) {
+      const errorData = await emailResponse.json();
+      console.error(`Resend API error: Status ${emailResponse.status}, Body:`, JSON.stringify(errorData));
+      return new Response(JSON.stringify({ 
+        error: `Failed to send confirmation email: ${errorData.message || 'Unknown error'}`,
+        success: false 
+      }), {
+        status: emailResponse.status,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const emailData = await emailResponse.json();
+
+    console.log("Vote confirmation email sent successfully:", emailData);
+
+    return new Response(JSON.stringify({ 
+      success: true,
+      message: 'Vote confirmation email sent' 
+    }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders,
+      },
+    });
+  } catch (error: any) {
+    console.error("Error in send-vote-confirmation function:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        success: false 
+      }),
+      {
+        status: error.message.includes('Email not verified') ? 403 : 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+};
+
+serve(handler);
