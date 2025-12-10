@@ -3,7 +3,7 @@ import Navigation from "@/components/Navigation";
 import Countdown from "@/components/Countdown";
 import TeamCard from "@/components/TeamCard";
 import UpcomingMatchesSection from "@/components/UpcomingMatchesSection"; // Import the new component
-import { Trophy, Calendar, BarChart3, Radio, Shield } from "lucide-react";
+import { Trophy, Calendar, BarChart3, Radio, Shield, LogIn } from "lucide-react"; // Added LogIn
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
