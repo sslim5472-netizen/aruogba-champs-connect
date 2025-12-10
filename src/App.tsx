@@ -19,6 +19,8 @@ import Admin from "./pages/Admin";
 import AdminManagement from "./pages/AdminManagement";
 import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
+import Login from "./pages/Login"; // Import the Login page
+import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
 
 const queryClient = new QueryClient();
 
@@ -43,8 +45,14 @@ const App = () => (
               <Route path="/standings" element={<Standings />} />
               <Route path="/media" element={<Media />} />
               <Route path="/motm" element={<MotmAwards />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/manage" element={<AdminManagement />} />
+              <Route path="/login" element={<Login />} /> {/* Add login route */}
+
+              {/* Protected Admin Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/manage" element={<AdminManagement />} />
+              </Route>
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

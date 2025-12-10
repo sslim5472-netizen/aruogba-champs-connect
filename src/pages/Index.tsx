@@ -7,6 +7,7 @@ import { Trophy, Calendar, BarChart3, Radio, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/components/SessionContextProvider"; // Import useSession
 
 // Define a type for the team data including player count
 interface TeamWithPlayerCount {
@@ -20,7 +21,8 @@ interface TeamWithPlayerCount {
 }
 
 const Index = () => {
-  const { data: teams, isLoading } = useQuery<TeamWithPlayerCount[]>({
+  const { isAdmin, isLoading: sessionLoading } = useSession(); // Use session context
+  const { data: teams, isLoading: teamsLoading } = useQuery<TeamWithPlayerCount[]>({
     queryKey: ["teams-with-player-count-index"], // Unique query key
     queryFn: async () => {
       const { data: teamsData, error: teamsError } = await supabase
@@ -111,7 +113,7 @@ const Index = () => {
           </p>
         </div>
 
-        {isLoading ? (
+        {teamsLoading ? (
           <div className="text-center text-muted-foreground">Loading teams...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 animate-scale-in">
@@ -142,12 +144,22 @@ const Index = () => {
       <div className="border-t border-border/50">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <Link to="/admin"> {/* Link directly to admin */}
-              <Button variant="outline" className="border-muted-foreground/30 hover:bg-muted/50">
-                <Shield className="w-4 h-4 mr-2" />
-                Admin Panel
-              </Button>
-            </Link>
+            {!sessionLoading && isAdmin && ( // Conditionally render admin button
+              <Link to="/admin">
+                <Button variant="outline" className="border-muted-foreground/30 hover:bg-muted/50">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Admin Panel
+                </Button>
+              </Link>
+            )}
+            {!sessionLoading && !isAdmin && ( // Show login if not admin
+              <Link to="/login">
+                <Button variant="outline" className="border-muted-foreground/30 hover:bg-muted/50">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Admin Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

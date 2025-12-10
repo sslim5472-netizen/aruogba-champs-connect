@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,14 +12,6 @@ import { Button } from "@/components/ui/button";
 
 const AdminManagement = () => {
   const navigate = useNavigate();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // AdminManagement page is now directly accessible without authentication.
-  // This is a simplification based on the request to remove login functionality.
 
   return (
     <div className="min-h-screen">
@@ -43,7 +34,7 @@ const AdminManagement = () => {
           </div>
 
           <Tabs defaultValue="teams" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 glass-card"> {/* Adjusted grid-cols to 5 */}
+            <TabsList className="grid w-full grid-cols-6 glass-card"> {/* Adjusted grid-cols to 6 */}
               <TabsTrigger value="teams">Teams</TabsTrigger>
               <TabsTrigger value="players">Players</TabsTrigger>
               <TabsTrigger value="matches">Matches</TabsTrigger>

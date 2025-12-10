@@ -1,11 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
-import { Trophy, Users, Calendar, BarChart3, Radio, Award, Film, Shield } from "lucide-react"; // Added Film icon
+import { Trophy, Users, Calendar, BarChart3, Radio, Award, Film, Shield, LogIn, LogOut } from "lucide-react";
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 import { Button } from "@/components/ui/button";
+import { useSession } from '@/components/SessionContextProvider'; // Import useSession
+import { supabase } from '@/integrations/supabase/client'; // Import supabase client
+import { toast } from "sonner"; // Import toast for notifications
 
 const Navigation = () => {
   const location = useLocation();
-  
+  const { session, isAdmin, isLoading } = useSession(); // Use session context
+
   const navItems = [
     { path: "/", label: "Home", icon: Trophy },
     { path: "/teams", label: "Teams", icon: Users },
@@ -15,6 +19,16 @@ const Navigation = () => {
     { path: "/media", label: "Media", icon: Film },
     { path: "/motm", label: "MOTM", icon: Award },
   ];
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Failed to log out.");
+      console.error("Logout error:", error);
+    } else {
+      toast.success("Logged out successfully.");
+    }
+  };
 
   return (
     <nav className="glass-card sticky top-0 z-50 border-b border-border/50">
@@ -48,18 +62,44 @@ const Navigation = () => {
               </Link>
             ))}
             
-            {/* Admin link - now directly accessible */}
-            <Link
-              to="/admin"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs ${
-                location.pathname.startsWith('/admin')
-                  ? "bg-gradient-to-r from-primary to-accent text-white"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              <Shield className="w-4 h-4" />
-              <span className="hidden lg:inline font-heading">Admin</span>
-            </Link>
+            {/* Admin link - conditionally rendered */}
+            {!isLoading && isAdmin && (
+              <Link
+                to="/admin"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs ${
+                  location.pathname.startsWith('/admin')
+                    ? "bg-gradient-to-r from-primary to-accent text-white"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                <span className="hidden lg:inline font-heading">Admin</span>
+              </Link>
+            )}
+
+            {/* Login/Logout button */}
+            {!isLoading && (
+              session ? (
+                <Button 
+                  variant="ghost" 
+                  onClick={handleLogout} 
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden lg:inline font-heading">Logout</span>
+                </Button>
+              ) : (
+                <Link to="/login">
+                  <Button 
+                    variant="ghost" 
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span className="hidden lg:inline font-heading">Login</span>
+                  </Button>
+                </Link>
+              )
+            )}
           </div>
         </div>
       </div>

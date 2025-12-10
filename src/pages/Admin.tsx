@@ -1,21 +1,10 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Shield, Users, Calendar, Trophy } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Admin page is now directly accessible without authentication.
-  // This is a simplification based on the request to remove login functionality.
-  // In a real production app, you would implement a different admin-only authentication.
 
   const adminCards = [
     {
