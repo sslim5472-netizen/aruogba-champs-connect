@@ -186,45 +186,6 @@ export type Database = {
           },
         ]
       }
-      match_votes: {
-        Row: {
-          created_at: string
-          id: string
-          match_id: string
-          player_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          match_id: string
-          player_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          match_id?: string
-          player_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "match_votes_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "matches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "match_votes_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       motm_awards: {
         Row: {
           id: string
@@ -323,44 +284,8 @@ export type Database = {
           },
         ]
       }
-      profiles: {
-        Row: {
-          id: string
-          avatar_url: string | null
-          created_at: string
-          updated_at: string
-          first_name: string | null
-          last_name: string | null
-        }
-        Insert: {
-          id: string
-          avatar_url?: string | null
-          created_at?: string
-          updated_at?: string
-          first_name?: string | null
-          last_name?: string | null
-        }
-        Update: {
-          id?: string
-          avatar_url?: string | null
-          created_at?: string
-          updated_at?: string
-          first_name?: string | null
-          last_name?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       teams: {
         Row: {
-          _types_ping: boolean
           captain_name: string
           color: string
           created_at: string
@@ -373,9 +298,9 @@ export type Database = {
           losses: number
           goals_for: number
           goals_against: number
+          played: number
         }
         Insert: {
-          _types_ping?: boolean
           captain_name: string
           color: string
           created_at?: string
@@ -388,9 +313,9 @@ export type Database = {
           losses?: number
           goals_for?: number
           goals_against?: number
+          played?: number
         }
         Update: {
-          _types_ping?: boolean
           captain_name?: string
           color?: string
           created_at?: string
@@ -403,128 +328,141 @@ export type Database = {
           losses?: number
           goals_for?: number
           goals_against?: number
+          played?: number
         }
         Relationships: []
       }
-      user_roles: {
+    }
+    Views: {
+      upcoming_fixtures: {
         Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["user_role"]
-          team_id: string | null
-          user_id: string
+          match_id: string | null
+          match_date: string | null
+          venue: string | null
+          status: Database["public"]["Enums"]["match_status"] | null
+          home_team_id: string | null
+          home_team_name: string | null
+          away_team_id: string | null
+          away_team_name: string | null
         }
         Insert: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          team_id?: string | null
-          user_id: string
+          match_id?: string | null
+          match_date?: string | null
+          venue?: string | null
+          status?: Database["public"]["Enums"]["match_status"] | null
+          home_team_id?: string | null
+          home_team_name?: string | null
+          away_team_id?: string | null
+          away_team_name?: string | null
         }
         Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          team_id?: string | null
-          user_id?: string
+          match_id?: string | null
+          match_date?: string | null
+          venue?: string | null
+          status?: Database["public"]["Enums"]["match_status"] | null
+          home_team_id?: string | null
+          home_team_name?: string | null
+          away_team_id?: string | null
+          away_team_name?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "user_roles_team_id_fkey"
-            columns: ["team_id"]
+            foreignKeyName: "matches_away_team_id_fkey"
+            columns: ["away_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_home_team_id_fkey"
+            columns: ["home_team_id"]
             isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
       }
-      votes: {
+      team_standings: {
         Row: {
-          created_at: string
-          id: string
-          match_id: string
-          player_id: string
-          user_id: string | null
-          voter_ip: string
+          team_id: string | null
+          name: string | null
+          played: number | null
+          wins: number | null
+          draws: number | null
+          losses: number | null
+          goals_for: number | null
+          goals_against: number | null
+          goal_difference: number | null
+          points: number | null
         }
         Insert: {
-          created_at?: string
-          id?: string
-          match_id: string
-          player_id: string
-          user_id?: string | null
-          voter_ip: string
+          team_id?: string | null
+          name?: string | null
+          played?: number | null
+          wins?: number | null
+          draws?: number | null
+          losses?: number | null
+          goals_for?: number | null
+          goals_against?: number | null
+          goal_difference?: number | null
+          points?: number | null
         }
         Update: {
-          created_at?: string
-          id?: string
-          match_id?: string
-          player_id?: string
-          user_id?: string | null
-          voter_ip?: string
+          team_id?: string | null
+          name?: string | null
+          played?: number | null
+          wins?: number | null
+          draws?: number | null
+          losses?: number | null
+          goals_for?: number | null
+          goals_against?: number | null
+          goal_difference?: number | null
+          points?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "votes_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "matches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "votes_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-    }
-    Views: {
-      public_votes: {
-        Row: {
-          created_at: string | null
-          id: string | null
-          match_id: string | null
-          player_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string | null
-          match_id?: string | null
-          player_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string | null
-          match_id?: string | null
-          player_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "votes_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "matches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "votes_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
-      get_user_role: {
-        Args: { user_uuid: string }
-        Returns: Database["public"]["Enums"]["user_role"]
+      has_role: {
+        Args: { _user_id: string; _role: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
       }
-      lovable_types_ping: { Args: never; Returns: boolean }
+      increment_player_motm_awards: {
+        Args: { p_player_id: string }
+        Returns: void
+      }
+      update_team_stats_after_match: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      update_team_stats_from_match_result: {
+        Args: { match_row: Database["public"]["Tables"]["matches"]["Row"]; operation: string }
+        Returns: void
+      }
+      recalculate_team_stats: {
+        Args: { p_team_id: string }
+        Returns: void
+      }
+      update_player_motm_count: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      handle_match_stats_update: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      matches_broadcast_trigger: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      handle_updated_at: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      team_standings_fn: {
+        Args: Record<PropertyKey, never>
+        Returns: TABLE_team_standings_fn
+      }
     }
     Enums: {
       event_type:
@@ -541,7 +479,7 @@ export type Database = {
         | "Forward"
         | "Winger"
         | "Striker"
-      user_role: "admin" | "captain" | "viewer"
+      app_role: "admin" | "captain" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -549,33 +487,27 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -583,24 +515,20 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -608,24 +536,20 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -633,38 +557,45 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
+    | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof Database
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+type TABLE_team_standings_fn = {
+  team_id: string | null
+  name: string | null
+  played: number | null
+  wins: number | null
+  draws: number | null
+  losses: number | null
+  goals_for: number | null
+  goals_against: number | null
+  goal_difference: number | null
+  points: number | null
+}
 
 export const Constants = {
   public: {
@@ -679,7 +610,7 @@ export const Constants = {
         "Winger",
         "Striker",
       ],
-      user_role: ["admin", "captain", "viewer"],
+      app_role: ["admin", "captain", "viewer"],
     },
   },
 } as const
