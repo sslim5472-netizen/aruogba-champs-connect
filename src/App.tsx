@@ -2,6 +2,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Teams from "./pages/Teams";
 import TeamProfile from "./pages/TeamProfile";
@@ -14,39 +15,56 @@ import TopAssists from "./pages/TopAssists";
 import TopYellowCards from "./pages/TopYellowCards";
 import TopRedCards from "./pages/TopRedCards";
 import Standings from "./pages/Standings";
-import Media from "./pages/Media";
+import Voting from "./pages/Voting";
+import Media from "./pages/Media"; // Media page will now only show photos
+import MotmAwards from "./pages/MotmAwards";
+import Admin from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin";
+import AdminManagement from "./pages/AdminManagement";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
+import VotingNotification from "./components/VotingNotification";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Sonner />
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <div className="flex flex-col min-h-screen">
-          <div className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/teams" element={<Teams />} />
-              <Route path="/teams/:teamSlug" element={<TeamProfile />} />
-              <Route path="/fixtures" element={<Fixtures />} />
-              <Route path="/live" element={<LiveMatch />} />
-              <Route path="/matches/:matchId" element={<MatchDetails />} />
-              <Route path="/stats" element={<Stats />} />
-              <Route path="/stats/top-scorers" element={<TopScorers />} />
-              <Route path="/stats/top-assists" element={<TopAssists />} />
-              <Route path="/stats/top-yellow-cards" element={<TopYellowCards />} />
-              <Route path="/stats/top-red-cards" element={<TopRedCards />} />
-              <Route path="/standings" element={<Standings />} />
-              <Route path="/media" element={<Media />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+      <AuthProvider>
+        <Sonner />
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <div className="flex flex-col min-h-screen">
+            <div className="flex-grow">
+              <VotingNotification />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/teams" element={<Teams />} />
+                <Route path="/teams/:teamSlug" element={<TeamProfile />} />
+                <Route path="/fixtures" element={<Fixtures />} />
+                <Route path="/live" element={<LiveMatch />} />
+                <Route path="/matches/:matchId" element={<MatchDetails />} />
+                <Route path="/stats" element={<Stats />} />
+                <Route path="/stats/top-scorers" element={<TopScorers />} />
+                <Route path="/stats/top-assists" element={<TopAssists />} />
+                <Route path="/stats/top-yellow-cards" element={<TopYellowCards />} />
+                <Route path="/stats/top-red-cards" element={<TopRedCards />} />
+                <Route path="/standings" element={<Standings />} />
+                <Route path="/voting" element={<Voting />} />
+                <Route path="/media" element={<Media />} />
+                {/* Removed the /highlights route */}
+                <Route path="/motm" element={<MotmAwards />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin/manage" element={<AdminManagement />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+            <Footer />
           </div>
-          <Footer />
-        </div>
-      </BrowserRouter>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

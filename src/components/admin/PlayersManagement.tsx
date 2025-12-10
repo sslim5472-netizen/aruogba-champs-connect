@@ -27,6 +27,7 @@ const playerSchema = z.object({
   yellow_cards: z.coerce.number().int().min(0, "Yellow cards cannot be negative"),
   red_cards: z.coerce.number().int().min(0, "Red cards cannot be negative"),
   clean_sheets: z.coerce.number().int().min(0, "Clean sheets cannot be negative"),
+  motm_awards: z.coerce.number().int().min(0, "MOTM awards cannot be negative"),
 });
 
 interface Player {
@@ -41,6 +42,7 @@ interface Player {
   yellow_cards: number;
   red_cards: number;
   clean_sheets: number;
+  motm_awards: number;
   teams: { name: string };
 }
 
@@ -59,6 +61,7 @@ export const PlayersManagement = () => {
     yellow_cards: number;
     red_cards: number;
     clean_sheets: number;
+    motm_awards: number;
   }>({
     name: "",
     team_id: "",
@@ -70,6 +73,7 @@ export const PlayersManagement = () => {
     yellow_cards: 0,
     red_cards: 0,
     clean_sheets: 0,
+    motm_awards: 0,
   });
 
   const { data: teams } = useQuery({
@@ -153,6 +157,7 @@ export const PlayersManagement = () => {
       yellow_cards: 0,
       red_cards: 0,
       clean_sheets: 0,
+      motm_awards: 0,
     });
     setIsEditing(false);
     setEditingPlayer(null);
@@ -171,6 +176,7 @@ export const PlayersManagement = () => {
       yellow_cards: player.yellow_cards,
       red_cards: player.red_cards,
       clean_sheets: player.clean_sheets,
+      motm_awards: player.motm_awards,
     });
     setIsEditing(true);
   };
@@ -321,13 +327,13 @@ export const PlayersManagement = () => {
               </div>
 
               <div>
-                <Label htmlFor="clean_sheets">Clean Sheets</Label>
+                <Label htmlFor="motm">MOTM Awards</Label>
                 <Input
-                  id="clean_sheets"
+                  id="motm"
                   type="number"
                   min="0"
-                  value={formData.clean_sheets}
-                  onChange={(e) => setFormData({ ...formData, clean_sheets: parseInt(e.target.value) })}
+                  value={formData.motm_awards}
+                  onChange={(e) => setFormData({ ...formData, motm_awards: parseInt(e.target.value) })}
                 />
               </div>
             </div>
@@ -370,6 +376,7 @@ export const PlayersManagement = () => {
                         <span>🎯 {player.assists}</span>
                         <span>🟨 {player.yellow_cards}</span>
                         <span>🟥 {player.red_cards}</span>
+                        <span>🏆 {player.motm_awards}</span>
                       </div>
 
                       <div className="flex gap-2">
