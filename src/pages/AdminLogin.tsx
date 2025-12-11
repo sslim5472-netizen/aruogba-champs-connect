@@ -23,7 +23,7 @@ const AdminLogin = () => {
 
   useEffect(() => {
     if (user && userRole === 'admin') {
-      navigate("/admin");
+      navigate("/admin/manage"); // Changed redirection from /admin to /admin/manage
     } else if (user && userRole !== 'admin') {
       toast.error("Access denied. Admin privileges required.");
       navigate("/");
