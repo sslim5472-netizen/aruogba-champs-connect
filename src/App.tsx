@@ -15,16 +15,13 @@ import TopAssists from "./pages/TopAssists";
 import TopYellowCards from "./pages/TopYellowCards";
 import TopRedCards from "./pages/TopRedCards";
 import Standings from "./pages/Standings";
-import Voting from "./pages/Voting";
-import Media from "./pages/Media"; // Media page will now only show photos
+import Media from "./pages/Media";
 import MotmAwards from "./pages/MotmAwards";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import AdminManagement from "./pages/AdminManagement";
-import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
-import VotingNotification from "./components/VotingNotification";
 
 const queryClient = new QueryClient();
 
@@ -32,11 +29,10 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Sonner />
+        <Sonner /> {/* Toaster moved here */}
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <div className="flex flex-col min-h-screen">
             <div className="flex-grow">
-              <VotingNotification />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/teams" element={<Teams />} />
@@ -50,14 +46,13 @@ const App = () => (
                 <Route path="/stats/top-yellow-cards" element={<TopYellowCards />} />
                 <Route path="/stats/top-red-cards" element={<TopRedCards />} />
                 <Route path="/standings" element={<Standings />} />
-                <Route path="/voting" element={<Voting />} />
+                {/* Removed Voting route */}
                 <Route path="/media" element={<Media />} />
-                {/* Removed the /highlights route */}
                 <Route path="/motm" element={<MotmAwards />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin/manage" element={<AdminManagement />} />
-                <Route path="/auth" element={<Auth />} />
+                {/* Removed Auth route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>

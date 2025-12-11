@@ -52,7 +52,6 @@ const AdminLogin = () => {
         }
         setLoading(false);
       }
-      // Success handling is done in useEffect
     } catch (err: any) {
       toast.error(err?.message || "An unexpected error occurred");
       setLoading(false);

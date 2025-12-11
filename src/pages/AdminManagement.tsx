@@ -44,14 +44,12 @@ const AdminManagement = () => {
     );
   }
 
-  // If user is null or not admin, the effect above handles navigation
   if (!user || userRole !== 'admin') {
     return null;
   }
 
   const handleSignOut = async () => {
     await signOut();
-    // signOut handles navigation and reload, so no further action needed here
   };
 
   return (
@@ -84,11 +82,10 @@ const AdminManagement = () => {
           </div>
 
           <Tabs defaultValue="teams" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 glass-card"> {/* Changed grid-cols from 7 to 6 */}
+            <TabsList className="grid w-full grid-cols-5 glass-card"> {/* Adjusted grid-cols to 5 */}
               <TabsTrigger value="teams">Teams</TabsTrigger>
               <TabsTrigger value="players">Players</TabsTrigger>
               <TabsTrigger value="matches">Matches</TabsTrigger>
-              {/* Removed Highlights TabTrigger */}
               <TabsTrigger value="photos">Photos</TabsTrigger>
               <TabsTrigger value="motm">MOTM</TabsTrigger>
               <TabsTrigger value="standings">Standings</TabsTrigger>
@@ -105,8 +102,6 @@ const AdminManagement = () => {
             <TabsContent value="matches">
               <MatchesManagement />
             </TabsContent>
-
-            {/* Removed Highlights TabContent */}
             
             <TabsContent value="photos">
               <PhotosManagement />

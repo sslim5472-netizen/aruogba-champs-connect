@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/Navigation";
-import { Shield, Users, Calendar, Trophy, LogOut } from "lucide-react"; // Removed Video icon
+import { Shield, Users, Calendar, Trophy, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const Admin = () => {
-  const { user, userRole, firstName, lastName, signOut, loading } = useAuth();
+  const { user, userRole, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
 
@@ -39,21 +39,18 @@ const Admin = () => {
     );
   }
 
-  // If user is null or not admin, the effect above handles navigation
-  // This explicit check acts as a safeguard
   if (!user || userRole !== 'admin') {
-    return null; // Or a minimal UI state while navigating
+    return null;
   }
 
   const handleSignOut = async () => {
     await signOut();
-    // signOut handles navigation and reload, so no further action needed here
   };
 
   const adminCards = [
     {
       title: "Full CRUD Management",
-      description: "Complete control over teams, players, matches and photos", // Updated description
+      description: "Complete control over teams, players, matches and photos",
       icon: Shield,
       path: "/admin/manage",
       roles: ['admin'],
@@ -79,7 +76,6 @@ const Admin = () => {
       path: "/live",
       roles: ['admin'],
     },
-    // Removed Highlights card
   ];
 
   const accessibleCards = adminCards.filter(card => 
@@ -102,7 +98,7 @@ const Admin = () => {
                 <div>
                   <h1 className="text-3xl font-heading gradient-text">Admin Dashboard</h1>
                   <p className="text-muted-foreground capitalize">
-                    Welcome, {user ? (firstName && lastName ? `${firstName} ${lastName}` : user.email) : 'Guest'} (Role: {userRole || 'viewer'})
+                    Welcome, {user ? user.email : 'Guest'} (Role: {userRole || 'viewer'})
                   </p>
                 </div>
               </div>
