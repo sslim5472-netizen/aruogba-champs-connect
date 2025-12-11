@@ -96,9 +96,10 @@ const RefereePanel = () => {
   }, [user, userRole, authLoading, navigate, mounted]);
 
   // Fetch scheduled matches
-  const { data: scheduledMatches, isLoading: matchesLoading } = useQuery<Match[]>({
+  const { data: scheduledMatches, isLoading: matchesLoading, error: matchesError } = useQuery<Match[]>({
     queryKey: ["referee-scheduled-matches"],
     queryFn: async () => {
+      console.log("RefereePanel: Fetching scheduled, live, and half_time matches...");
       const { data, error } = await supabase
         .from("matches")
         .select(`
@@ -120,7 +121,11 @@ const RefereePanel = () => {
         `)
         .in("status", ["scheduled", "live", "half_time"])
         .order("match_date", { ascending: true });
-      if (error) throw error;
+      if (error) {
+        console.error("RefereePanel: Error fetching matches:", error);
+        throw error;
+      }
+      console.log("RefereePanel: Fetched matches data:", data);
       return data;
     },
     refetchInterval: 10000, // Refetch every 10 seconds to get latest match status
@@ -136,12 +141,17 @@ const RefereePanel = () => {
     queryKey: ["referee-match-players", activeMatch?.home_team_id, activeMatch?.away_team_id],
     queryFn: async () => {
       if (!activeMatch) return [];
+      console.log("RefereePanel: Fetching players for match teams:", activeMatch.home_team_id, activeMatch.away_team_id);
       const { data, error } = await supabase
         .from("players")
         .select("id, name, team_id")
         .in("team_id", [activeMatch.home_team_id, activeMatch.away_team_id])
         .order("name");
-      if (error) throw error;
+      if (error) {
+        console.error("RefereePanel: Error fetching match players:", error);
+        throw error;
+      }
+      console.log("RefereePanel: Fetched match players:", data);
       return data;
     },
     enabled: !!activeMatch,
@@ -485,11 +495,19 @@ const RefereePanel = () => {
                       <SelectValue placeholder="Select a match" />
                     </SelectTrigger>
                     <SelectContent>
-                      {scheduledMatches?.map((match) => (
-                        <SelectItem key={match.id} value={match.id}>
-                          {match.home_team.name} vs {match.away_team.name} ({format(new Date(match.match_date), "MMM d, h:mm a")}) - {match.status.toUpperCase()}
-                        </SelectItem>
-                      ))}
+                      {matchesLoading ? (
+                        <SelectItem value="loading" disabled>Loading matches...</SelectItem>
+                      ) : matchesError ? (
+                        <SelectItem value="error" disabled>Error loading matches</SelectItem>
+                      ) : scheduledMatches?.length === 0 ? (
+                        <SelectItem value="no-matches" disabled>No scheduled/live matches</SelectItem>
+                      ) : (
+                        scheduledMatches?.map((match) => (
+                          <SelectItem key={match.id} value={match.id}>
+                            {match.home_team.name} vs {match.away_team.name} ({format(new Date(match.match_date), "MMM d, h:mm a")}) - {match.status.toUpperCase()}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   <Button 
