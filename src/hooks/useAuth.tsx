@@ -55,9 +55,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (roleData) {
               setUserRole(roleData.role);
               setTeamId(roleData.team_id);
+              console.log("AuthContext: User role set to", roleData.role, "for user", session.user.email);
             } else {
               setUserRole(null);
               setTeamId(null);
+              console.log("AuthContext: No role found for user", session.user.email);
             }
           } catch (error) {
             console.error("Error during auth state change user data fetch:", error);
@@ -67,6 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setUserRole(null);
           setTeamId(null);
+          console.log("AuthContext: User signed out or no user session.");
         }
         setLoading(false);
       }
@@ -101,6 +104,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               if (roleData) {
                 setUserRole(roleData.role);
                 setTeamId(roleData.team_id);
+                console.log("AuthContext: Initial session user role set to", roleData.role, "for user", session.user.email);
+              } else {
+                setUserRole(null);
+                setTeamId(null);
+                console.log("AuthContext: No role found for initial session user", session.user.email);
               }
             } catch (error) {
               console.error("Error during initial session user data fetch:", error);
