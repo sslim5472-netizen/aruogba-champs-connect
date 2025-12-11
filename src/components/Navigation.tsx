@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Trophy, Users, Calendar, BarChart3, Radio, LogIn, LogOut, Award, Film, Whistle } from "lucide-react"; // Added Whistle icon
+import { Trophy, Users, Calendar, BarChart3, Radio, LogIn, LogOut, Award, Film, Whistle } from "lucide-react"; // Added Whistle icon - attempting to resolve import issue
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
