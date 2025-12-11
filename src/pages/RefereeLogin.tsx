@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Whistle, LogIn } from "lucide-react";
+import { Shield, LogIn } from "lucide-react"; // Replaced Whistle with Shield
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -63,7 +63,7 @@ const RefereeLogin = () => {
         <div className="glass-card p-8 rounded-xl animate-fade-in border-2 border-primary/20">
           <div className="text-center mb-8">
             <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-effect">
-              <Whistle className="w-10 h-10 text-white" />
+              <Shield className="w-10 h-10 text-white" /> {/* Replaced Whistle with Shield */}
             </div>
             <h1 className="text-3xl font-heading gradient-text mb-2">
               Referee Portal

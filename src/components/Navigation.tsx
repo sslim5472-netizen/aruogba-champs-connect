@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Trophy, Users, Calendar, BarChart3, Radio, LogIn, LogOut, Award, Film, Whistle } from "lucide-react"; // Added Whistle icon - attempting to resolve import issue
+import { Trophy, Users, Calendar, BarChart3, Radio, LogIn, LogOut, Award, Film, Shield } from "lucide-react"; // Replaced Whistle with Shield
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,7 @@ const Navigation = () => {
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`}
                   >
-                    <Whistle className="w-4 h-4" />
+                    <Shield className="w-4 h-4" /> {/* Replaced Whistle with Shield */}
                     <span className="hidden lg:inline font-heading">Referee Panel</span>
                   </Link>
                 )}
@@ -106,7 +106,7 @@ const Navigation = () => {
                     size="sm"
                     className="border-muted-foreground/30 hover:bg-muted/50"
                   >
-                    <Whistle className="w-4 h-4" />
+                    <Shield className="w-4 h-4" /> {/* Replaced Whistle with Shield */}
                     <span className="hidden md:inline text-sm font-heading ml-2">Referee Login</span>
                   </Button>
                 </Link>

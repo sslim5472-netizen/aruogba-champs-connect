@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Whistle, Play, Pause, StopCircle, FastForward, Clock, Plus, Minus, Target, AlertTriangle, Users, LogOut } from "lucide-react";
+import { Shield, Play, Pause, StopCircle, FastForward, Clock, Plus, Minus, Target, AlertTriangle, Users, LogOut } from "lucide-react"; // Replaced Whistle with Shield
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -454,7 +454,7 @@ const RefereePanel = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-effect">
-                  <Whistle className="w-6 h-6 text-white" />
+                  <Shield className="w-6 h-6 text-white" /> {/* Replaced Whistle with Shield */}
                 </div>
                 <div>
                   <h1 className="text-3xl font-heading gradient-text">Referee Panel</h1>
