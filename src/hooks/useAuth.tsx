@@ -23,11 +23,10 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: { ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
-  // Removed teamId state as it's not in the user_roles table
   const [loading, setLoading] = useState(true);
   const isSigningOutRef = useRef(false);
 
@@ -39,16 +38,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          console.log("AuthContext: User session found, fetching role for user ID:", session.user.id);
           try {
             const { data: roleData, error: roleError } = await supabase
               .from('user_roles')
-              .select('role') // Removed team_id from select
+              .select('role')
               .eq('user_id', session.user.id)
-              .maybeSingle<{ role: string } | null>(); // Updated type to not include team_id
+              .maybeSingle<{ role: string } | null>();
             
             if (roleError) {
-               console.error("Error fetching user role on auth state change:", roleError);
+               console.error("AuthContext: Error fetching user role:", roleError);
             }
+            console.log("AuthContext: Role data received:", roleData);
 
             if (roleData) {
               setUserRole(roleData.role);
@@ -58,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               console.log("AuthContext: No role found for user", session.user.email);
             }
           } catch (error) {
-            console.error("Error during auth state change user data fetch:", error);
+            console.error("AuthContext: Error during auth state change user data fetch:", error);
             setUserRole(null);
           }
         } else {
@@ -73,26 +74,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Error getting initial session:", error);
+          console.error("AuthContext: Error getting initial session:", error);
           setSession(null);
           setUser(null);
           setUserRole(null);
         } else {
-          console.log("Initial session check:", session);
+          console.log("AuthContext: Initial session check:", session);
           setSession(session);
           setUser(session?.user ?? null);
           
           if (session?.user) {
+            console.log("AuthContext: Initial session user found, fetching role for user ID:", session.user.id);
             try {
               const { data: roleData, error: roleError } = await supabase
                 .from('user_roles')
-                .select('role') // Removed team_id from select
+                .select('role')
                 .eq('user_id', session.user.id)
-                .maybeSingle<{ role: string } | null>(); // Updated type to not include team_id
+                .maybeSingle<{ role: string } | null>();
               
               if (roleError) {
-                 console.error("Error fetching user role on initial session:", roleError);
+                 console.error("AuthContext: Error fetching user role on initial session:", roleError);
               }
+              console.log("AuthContext: Initial session role data received:", roleData);
 
               if (roleData) {
                 setUserRole(roleData.role);
@@ -102,13 +105,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 console.log("AuthContext: No role found for initial session user", session.user.email);
               }
             } catch (error) {
-              console.error("Error during initial session user data fetch:", error);
+              console.error("AuthContext: Error during initial session user data fetch:", error);
               setUserRole(null);
             }
           }
         }
       } catch (error) {
-        console.error("Unexpected error in loadInitialSession:", error);
+        console.error("AuthContext: Unexpected error in loadInitialSession:", error);
         setSession(null);
         setUser(null);
         setUserRole(null);
@@ -147,15 +150,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error("Error signing out from Supabase:", error);
+        console.error("AuthContext: Error signing out from Supabase:", error);
         toast.error("Failed to sign out: " + error.message);
       } else {
-        console.log("Successfully signed out from Supabase. Initiating page reload...");
+        console.log("AuthContext: Successfully signed out from Supabase. Initiating page reload...");
         toast.success("Successfully logged out!");
         window.location.assign('/');
       }
     } catch (err: any) {
-      console.error("Unexpected error during sign out:", err);
+      console.error("AuthContext: Unexpected error during sign out:", err);
       toast.error("An unexpected error occurred during logout.");
     } finally {
       if (isSigningOutRef.current) {
@@ -165,7 +168,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(null);
       setUserRole(null);
       setLoading(false);
-      console.log("Sign out process finalized in hook (before potential reload).");
+      console.log("AuthContext: Sign out process finalized in hook (before potential reload).");
     }
   };
 
