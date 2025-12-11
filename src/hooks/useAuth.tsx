@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null;
   userRole: string | null;
   teamId: string | null;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ user: User | null, userRole: string | null, error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
 }
@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   userRole: null,
   teamId: null,
-  signIn: async () => ({ error: null }),
+  signIn: async () => ({ user: null, userRole: null, error: null }),
   signOut: async () => {},
   loading: true,
 });
@@ -127,12 +127,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    if (error) setLoading(false);
-    return { error };
+
+    if (error) {
+      setLoading(false);
+      return { user: null, userRole: null, error };
+    }
+
+    const signedInUser = data.user;
+    let role = null;
+    if (signedInUser) {
+      try {
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', signedInUser.id)
+          .maybeSingle<{ role: string } | null>();
+        if (roleError) {
+          console.error("Error fetching user role after sign-in:", roleError);
+        }
+        role = roleData?.role || null;
+      } catch (roleFetchError) {
+        console.error("Error fetching user role after sign-in:", roleFetchError);
+      }
+    }
+    setLoading(false); // Set loading to false after role is determined
+    return { user: signedInUser, userRole: role, error: null };
   };
 
   const signOut = async () => {

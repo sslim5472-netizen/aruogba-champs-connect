@@ -22,11 +22,14 @@ const AdminLogin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // This useEffect handles initial load and subsequent auth state changes
+    // If user is already logged in as admin, redirect.
+    // If user is logged in but not admin, deny access.
     if (user && userRole === 'admin') {
-      navigate("/admin");
+      navigate("/admin", { replace: true }); // Use replace to prevent going back to login
     } else if (user && userRole !== 'admin') {
       toast.error("Access denied. Admin privileges required.");
-      navigate("/");
+      navigate("/", { replace: true });
     }
   }, [user, userRole, navigate]);
 
@@ -42,7 +45,7 @@ const AdminLogin = () => {
         return;
       }
 
-      const { error: signInError } = await signIn(email, password);
+      const { user: signedInUser, userRole: signedInUserRole, error: signInError } = await signIn(email, password);
       
       if (signInError) {
         if (signInError.message.includes('Invalid login credentials')) {
@@ -51,6 +54,12 @@ const AdminLogin = () => {
           toast.error(signInError.message || "Failed to sign in");
         }
         setLoading(false);
+      } else if (signedInUser && signedInUserRole === 'admin') {
+        toast.success("Logged in as admin!");
+        navigate("/admin", { replace: true });
+      } else if (signedInUser && signedInUserRole !== 'admin') {
+        toast.error("Access denied. Admin privileges required.");
+        navigate("/", { replace: true });
       }
     } catch (err: any) {
       toast.error(err?.message || "An unexpected error occurred");
