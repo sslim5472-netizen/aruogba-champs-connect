@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, Play, Pause, StopCircle, FastForward, Clock, Plus, Minus, Target, AlertTriangle, Users, LogOut } from "lucide-react"; // Replaced Whistle with Shield
+import { Shield, Play, Pause, StopCircle, FastForward, Clock, Plus, Minus, Target, AlertTriangle, Users, LogOut, Eye } from "lucide-react"; // Added Eye icon
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -479,18 +479,29 @@ const RefereePanel = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="match-select">Select Active Fixture</Label>
-                <Select value={selectedMatchId || ""} onValueChange={setSelectedMatchId} disabled={matchesLoading || activeMatch?.status === 'finished'}>
-                  <SelectTrigger id="match-select">
-                    <SelectValue placeholder="Select a match" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {scheduledMatches?.map((match) => (
-                      <SelectItem key={match.id} value={match.id}>
-                        {match.home_team.name} vs {match.away_team.name} ({format(new Date(match.match_date), "MMM d, h:mm a")}) - {match.status.toUpperCase()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={selectedMatchId || ""} onValueChange={setSelectedMatchId} disabled={matchesLoading || activeMatch?.status === 'finished'}>
+                    <SelectTrigger id="match-select">
+                      <SelectValue placeholder="Select a match" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {scheduledMatches?.map((match) => (
+                        <SelectItem key={match.id} value={match.id}>
+                          {match.home_team.name} vs {match.away_team.name} ({format(new Date(match.match_date), "MMM d, h:mm a")}) - {match.status.toUpperCase()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => selectedMatchId && navigate(`/matches/${selectedMatchId}`)}
+                    disabled={!selectedMatchId}
+                    title="View Match Details"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label htmlFor="pitch">Pitch (Optional)</Label>
