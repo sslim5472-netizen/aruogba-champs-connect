@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Trophy, Users, Calendar, BarChart3, Radio, LogIn, LogOut, Award, Film } from "lucide-react";
+import { Trophy, Users, Calendar, BarChart3, Radio, LogIn, LogOut, Award, Film, Whistle } from "lucide-react"; // Added Whistle icon
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ const Navigation = () => {
     { path: "/fixtures", label: "Fixtures", icon: Calendar },
     { path: "/live", label: "Live", icon: Radio },
     { path: "/stats", label: "Stats", icon: BarChart3 },
-    // Removed Vote nav item
     { path: "/media", label: "Media", icon: Film },
     { path: "/motm", label: "MOTM", icon: Award },
   ];
@@ -51,19 +50,34 @@ const Navigation = () => {
               </Link>
               ))}
             
-            {user && userRole === 'admin' ? (
+            {user && (userRole === 'admin' || userRole === 'referee') ? (
               <>
-                <Link
-                  to="/admin"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs ${
-                    location.pathname.startsWith('/admin')
-                      ? "bg-gradient-to-r from-primary to-accent text-white"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                >
-                  <Trophy className="w-4 h-4" />
-                  <span className="hidden lg:inline font-heading">Admin</span>
-                </Link>
+                {userRole === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs ${
+                      location.pathname.startsWith('/admin')
+                        ? "bg-gradient-to-r from-primary to-accent text-white"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <Trophy className="w-4 h-4" />
+                    <span className="hidden lg:inline font-heading">Admin</span>
+                  </Link>
+                )}
+                {userRole === 'referee' && (
+                  <Link
+                    to="/referee/panel"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs ${
+                      location.pathname.startsWith('/referee')
+                        ? "bg-gradient-to-r from-primary to-accent text-white"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <Whistle className="w-4 h-4" />
+                    <span className="hidden lg:inline font-heading">Referee Panel</span>
+                  </Link>
+                )}
                 <Button
                   onClick={() => signOut()}
                   variant="ghost"
@@ -75,16 +89,28 @@ const Navigation = () => {
                 </Button>
               </>
             ) : (
-              <Link to="/admin/login">
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span className="hidden md:inline text-sm font-heading ml-2">Admin Login</span>
-                </Button>
-              </Link>
+              <>
+                <Link to="/admin/login">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span className="hidden md:inline text-sm font-heading ml-2">Admin Login</span>
+                  </Button>
+                </Link>
+                <Link to="/referee/login">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-muted-foreground/30 hover:bg-muted/50"
+                  >
+                    <Whistle className="w-4 h-4" />
+                    <span className="hidden md:inline text-sm font-heading ml-2">Referee Login</span>
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
         </div>

@@ -20,6 +20,8 @@ import MotmAwards from "./pages/MotmAwards";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import AdminManagement from "./pages/AdminManagement";
+import RefereeLogin from "./pages/RefereeLogin"; // New import
+import RefereePanel from "./pages/RefereePanel"; // New import
 import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
 
@@ -46,13 +48,13 @@ const App = () => (
                 <Route path="/stats/top-yellow-cards" element={<TopYellowCards />} />
                 <Route path="/stats/top-red-cards" element={<TopRedCards />} />
                 <Route path="/standings" element={<Standings />} />
-                {/* Removed Voting route */}
                 <Route path="/media" element={<Media />} />
                 <Route path="/motm" element={<MotmAwards />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin/manage" element={<AdminManagement />} />
-                {/* Removed Auth route */}
+                <Route path="/referee/login" element={<RefereeLogin />} /> {/* New route */}
+                <Route path="/referee/panel" element={<RefereePanel />} /> {/* New route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>

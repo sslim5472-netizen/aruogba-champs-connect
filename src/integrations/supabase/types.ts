@@ -134,6 +134,12 @@ export type Database = {
           updated_at: string
           venue: string | null
           live_stream_url: string | null
+          match_start_time: string | null -- New
+          match_pause_time: string | null -- New
+          total_paused_duration: string | null -- New (INTERVAL type maps to string in JS)
+          match_end_time: string | null -- New
+          pitch: string | null -- New
+          weather: string | null -- New
         }
         Insert: {
           assistant_1?: string | null
@@ -151,6 +157,12 @@ export type Database = {
           updated_at?: string
           venue?: string | null
           live_stream_url?: string | null
+          match_start_time?: string | null -- New
+          match_pause_time?: string | null -- New
+          total_paused_duration?: string | null -- New
+          match_end_time?: string | null -- New
+          pitch?: string | null -- New
+          weather?: string | null -- New
         }
         Update: {
           assistant_1?: string | null
@@ -168,6 +180,12 @@ export type Database = {
           updated_at?: string
           venue?: string | null
           live_stream_url?: string | null
+          match_start_time?: string | null -- New
+          match_pause_time?: string | null -- New
+          total_paused_duration?: string | null -- New
+          match_end_time?: string | null -- New
+          pitch?: string | null -- New
+          weather?: string | null -- New
         }
         Relationships: [
           {
@@ -425,14 +443,14 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "captain" | "viewer"
+      app_role: "admin" | "captain" | "viewer" | "referee" -- Updated
       event_type:
         | "goal"
         | "assist"
         | "yellow_card"
         | "red_card"
         | "substitution"
-      match_status: "scheduled" | "live" | "finished"
+      match_status: "scheduled" | "live" | "finished" | "half_time" -- Added half_time
       player_position:
         | "Goalkeeper"
         | "Defender"
@@ -440,7 +458,7 @@ export type Database = {
         | "Forward"
         | "Winger"
         | "Striker"
-      user_role: "admin" | "captain" | "viewer"
+      user_role: "admin" | "captain" | "viewer" | "referee" -- Updated
     }
     CompositeTypes: {
       [_ in never]: never
@@ -569,7 +587,7 @@ export const Constants = {
   public: {
     Enums: {
       event_type: ["goal", "assist", "yellow_card", "red_card", "substitution"],
-      match_status: ["scheduled", "live", "finished"],
+      match_status: ["scheduled", "live", "finished", "half_time"], -- Updated
       player_position: [
         "Goalkeeper",
         "Defender",
@@ -578,8 +596,8 @@ export const Constants = {
         "Winger",
         "Striker",
       ],
-      user_role: ["admin", "captain", "viewer"],
-      app_role: ["admin", "captain", "viewer"],
+      user_role: ["admin", "captain", "viewer", "referee"], -- Updated
+      app_role: ["admin", "captain", "viewer", "referee"], -- Updated
     },
   },
 } as const
