@@ -81,6 +81,9 @@ export type Database = {
           match_id: string
           minute: number
           player_id: string
+          assist_player_id: string | null // New
+          player_out_id: string | null // New
+          player_in_id: string | null // New
         }
         Insert: {
           created_at?: string
@@ -90,6 +93,9 @@ export type Database = {
           match_id: string
           minute: number
           player_id: string
+          assist_player_id?: string | null // New
+          player_out_id?: string | null // New
+          player_in_id?: string | null // New
         }
         Update: {
           created_at?: string
@@ -99,6 +105,9 @@ export type Database = {
           match_id?: string
           minute?: number
           player_id?: string
+          assist_player_id?: string | null // New
+          player_out_id?: string | null // New
+          player_in_id?: string | null // New
         }
         Relationships: [
           {
@@ -111,6 +120,27 @@ export type Database = {
           {
             foreignKeyName: "match_events_player_id_fkey"
             columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_events_assist_player_id_fkey"
+            columns: ["assist_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_events_player_out_id_fkey"
+            columns: ["player_out_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_events_player_in_id_fkey"
+            columns: ["player_in_id"]
             isOneToOne: false
             referencedRelation: "players"
             referencedColumns: ["id"]
@@ -134,12 +164,12 @@ export type Database = {
           updated_at: string
           venue: string | null
           live_stream_url: string | null
-          match_start_time: string | null -- New
-          match_pause_time: string | null -- New
-          total_paused_duration: string | null -- New (INTERVAL type maps to string in JS)
-          match_end_time: string | null -- New
-          pitch: string | null -- New
-          weather: string | null -- New
+          match_start_time: string | null // Existing
+          match_pause_time: string | null // Existing
+          total_paused_duration: string | null // Existing (INTERVAL type maps to string in JS)
+          match_end_time: string | null // Existing
+          pitch: string | null // Existing
+          weather: string | null // Existing
         }
         Insert: {
           assistant_1?: string | null
@@ -157,12 +187,12 @@ export type Database = {
           updated_at?: string
           venue?: string | null
           live_stream_url?: string | null
-          match_start_time?: string | null -- New
-          match_pause_time?: string | null -- New
-          total_paused_duration?: string | null -- New
-          match_end_time?: string | null -- New
-          pitch?: string | null -- New
-          weather?: string | null -- New
+          match_start_time?: string | null // Existing
+          match_pause_time?: string | null // Existing
+          total_paused_duration?: string | null // Existing
+          match_end_time?: string | null // Existing
+          pitch?: string | null // Existing
+          weather?: string | null // Existing
         }
         Update: {
           assistant_1?: string | null
@@ -180,12 +210,12 @@ export type Database = {
           updated_at?: string
           venue?: string | null
           live_stream_url?: string | null
-          match_start_time?: string | null -- New
-          match_pause_time?: string | null -- New
-          total_paused_duration?: string | null -- New
-          match_end_time?: string | null -- New
-          pitch?: string | null -- New
-          weather?: string | null -- New
+          match_start_time?: string | null // Existing
+          match_pause_time?: string | null // Existing
+          total_paused_duration?: string | null // Existing
+          match_end_time?: string | null // Existing
+          pitch?: string | null // Existing
+          weather?: string | null // Existing
         }
         Relationships: [
           {
@@ -443,14 +473,14 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "captain" | "viewer" | "referee" -- Updated
+      app_role: "admin" | "captain" | "viewer" | "referee"
       event_type:
         | "goal"
         | "assist"
         | "yellow_card"
         | "red_card"
         | "substitution"
-      match_status: "scheduled" | "live" | "finished" | "half_time" -- Added half_time
+      match_status: "scheduled" | "live" | "finished" | "half_time"
       player_position:
         | "Goalkeeper"
         | "Defender"
@@ -458,7 +488,7 @@ export type Database = {
         | "Forward"
         | "Winger"
         | "Striker"
-      user_role: "admin" | "captain" | "viewer" | "referee" -- Updated
+      user_role: "admin" | "captain" | "viewer" | "referee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -587,7 +617,7 @@ export const Constants = {
   public: {
     Enums: {
       event_type: ["goal", "assist", "yellow_card", "red_card", "substitution"],
-      match_status: ["scheduled", "live", "finished", "half_time"], -- Updated
+      match_status: ["scheduled", "live", "finished", "half_time"],
       player_position: [
         "Goalkeeper",
         "Defender",
@@ -596,8 +626,8 @@ export const Constants = {
         "Winger",
         "Striker",
       ],
-      user_role: ["admin", "captain", "viewer", "referee"], -- Updated
-      app_role: ["admin", "captain", "viewer", "referee"], -- Updated
+      user_role: ["admin", "captain", "viewer", "referee"],
+      app_role: ["admin", "captain", "viewer", "referee"],
     },
   },
 } as const
