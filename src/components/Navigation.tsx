@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Trophy, Users, Calendar, BarChart3, Radio, LogIn, LogOut, Award, Film, Shield } from "lucide-react"; // Replaced Whistle with Shield
+import { Trophy, Users, Calendar, BarChart3, Vote, Radio, LogIn, LogOut, Film, Award } from "lucide-react";
 import aruogbaLogo from "@/assets/aruogba-logo.jpg";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
 const Navigation = () => {
   const location = useLocation();
-  const { user, userRole, signOut } = useAuth();
+  const { user, userRole, firstName, lastName, signOut } = useAuth();
   
   const navItems = [
     { path: "/", label: "Home", icon: Trophy },
@@ -14,6 +14,7 @@ const Navigation = () => {
     { path: "/fixtures", label: "Fixtures", icon: Calendar },
     { path: "/live", label: "Live", icon: Radio },
     { path: "/stats", label: "Stats", icon: BarChart3 },
+    { path: "/voting", label: "Vote", icon: Vote },
     { path: "/media", label: "Media", icon: Film },
     { path: "/motm", label: "MOTM", icon: Award },
   ];
@@ -50,34 +51,19 @@ const Navigation = () => {
               </Link>
               ))}
             
-            {user && (userRole === 'admin' || userRole === 'referee') ? (
+            {user && userRole === 'admin' ? (
               <>
-                {userRole === 'admin' && (
-                  <Link
-                    to="/admin"
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs ${
-                      location.pathname.startsWith('/admin')
-                        ? "bg-gradient-to-r from-primary to-accent text-white"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    <Trophy className="w-4 h-4" />
-                    <span className="hidden lg:inline font-heading">Admin</span>
-                  </Link>
-                )}
-                {userRole === 'referee' && (
-                  <Link
-                    to="/referee/panel"
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs ${
-                      location.pathname.startsWith('/referee')
-                        ? "bg-gradient-to-r from-primary to-accent text-white"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    <Shield className="w-4 h-4" /> {/* Replaced Whistle with Shield */}
-                    <span className="hidden lg:inline font-heading">Referee Panel</span>
-                  </Link>
-                )}
+                <Link
+                  to="/admin"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs ${
+                    location.pathname.startsWith('/admin')
+                      ? "bg-gradient-to-r from-primary to-accent text-white"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span className="hidden lg:inline font-heading">Admin</span>
+                </Link>
                 <Button
                   onClick={() => signOut()}
                   variant="ghost"
@@ -88,29 +74,29 @@ const Navigation = () => {
                   <span className="hidden md:inline text-sm font-heading ml-2">Logout</span>
                 </Button>
               </>
+            ) : user ? (
+              <Button
+                onClick={() => signOut()}
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden md:inline text-sm font-heading ml-2">
+                  {firstName && lastName ? `${firstName} ${lastName}` : user.email} (Logout)
+                </span>
+              </Button>
             ) : (
-              <>
-                <Link to="/admin/login">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    <span className="hidden md:inline text-sm font-heading ml-2">Admin Login</span>
-                  </Button>
-                </Link>
-                <Link to="/referee/login">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-muted-foreground/30 hover:bg-muted/50"
-                  >
-                    <Shield className="w-4 h-4" /> {/* Replaced Whistle with Shield */}
-                    <span className="hidden md:inline text-sm font-heading ml-2">Referee Login</span>
-                  </Button>
-                </Link>
-              </>
+              <Link to="/auth">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span className="hidden md:inline text-sm font-heading ml-2">Sign Up / Login</span>
+                </Button>
+              </Link>
             )}
           </div>
         </div>

@@ -11,7 +11,6 @@ interface TeamWithPlayerCount {
   logo_url: string;
   color: string;
   player_count: number;
-  played: number; // Added played column
 }
 
 const Teams = () => {
@@ -21,9 +20,9 @@ const Teams = () => {
       console.log("Fetching teams with player count...");
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
-        .select("id, name, captain_name, logo_url, color, played"); // Select 'played'
-        // .order("name"); // Removed order by name to allow sorting by points
-      
+        .select("id, name, captain_name, logo_url, color")
+        .order("name");
+
       if (teamsError) {
         console.error("Error fetching teams data:", teamsError);
         throw teamsError;

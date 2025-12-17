@@ -20,7 +20,7 @@ const TeamProfile = () => {
       
       const { data, error } = await supabase
         .from('teams')
-        .select('*, played') // Select 'played' column
+        .select('*')
         .ilike('name', teamName || '')
         .maybeSingle();
       
@@ -72,7 +72,6 @@ const TeamProfile = () => {
     totalGoals: players?.reduce((sum, p) => sum + (p.goals || 0), 0) || 0,
     totalAssists: players?.reduce((sum, p) => sum + (p.assists || 0), 0) || 0,
     motmAwards: players?.reduce((sum, p) => sum + (p.motm_awards || 0), 0) || 0,
-    matchesPlayed: team.played || 0, // Use the new 'played' column
   };
 
   // Use the centralized getTeamLogo utility
@@ -110,10 +109,6 @@ const TeamProfile = () => {
                 <div className="flex items-center gap-2">
                   <Trophy className="w-5 h-5 text-gold" />
                   <span className="text-sm">{stats.motmAwards} MOTM Awards</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-silver" />
-                  <span className="text-sm">{stats.matchesPlayed} Matches Played</span>
                 </div>
               </div>
             </div>
