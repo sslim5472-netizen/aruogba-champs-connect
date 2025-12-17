@@ -70,6 +70,7 @@ export const MotmManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["motm-awards-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["motm-awards-public"] }); // Invalidate public query
       queryClient.invalidateQueries({ queryKey: ["players-admin"] });
       setSelectedMatchId(null);
       setSelectedPlayerId(null);
@@ -85,6 +86,7 @@ export const MotmManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["motm-awards-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["motm-awards-public"] }); // Invalidate public query
       queryClient.invalidateQueries({ queryKey: ["players-admin"] });
       toast.success("MOTM award revoked successfully");
     },

@@ -72,57 +72,6 @@ export type Database = {
           }
         ]
       }
-      highlights: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          match_id: string | null
-          team_id: string | null
-          thumbnail_url: string | null
-          title: string
-          updated_at: string
-          video_url: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          match_id?: string | null
-          team_id?: string | null
-          thumbnail_url?: string | null
-          title: string
-          updated_at?: string
-          video_url: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          match_id?: string | null
-          team_id?: string | null
-          thumbnail_url?: string | null
-          title?: string
-          updated_at?: string
-          video_url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "highlights_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "matches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "highlights_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       match_events: {
         Row: {
           created_at: string
@@ -132,6 +81,9 @@ export type Database = {
           match_id: string
           minute: number
           player_id: string
+          assist_player_id: string | null // New
+          player_out_id: string | null // New
+          player_in_id: string | null // New
         }
         Insert: {
           created_at?: string
@@ -141,6 +93,9 @@ export type Database = {
           match_id: string
           minute: number
           player_id: string
+          assist_player_id?: string | null // New
+          player_out_id?: string | null // New
+          player_in_id?: string | null // New
         }
         Update: {
           created_at?: string
@@ -150,6 +105,9 @@ export type Database = {
           match_id?: string
           minute?: number
           player_id?: string
+          assist_player_id?: string | null // New
+          player_out_id?: string | null // New
+          player_in_id?: string | null // New
         }
         Relationships: [
           {
@@ -162,6 +120,27 @@ export type Database = {
           {
             foreignKeyName: "match_events_player_id_fkey"
             columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_events_assist_player_id_fkey"
+            columns: ["assist_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_events_player_out_id_fkey"
+            columns: ["player_out_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_events_player_in_id_fkey"
+            columns: ["player_in_id"]
             isOneToOne: false
             referencedRelation: "players"
             referencedColumns: ["id"]
@@ -184,7 +163,13 @@ export type Database = {
           status: Database["public"]["Enums"]["match_status"] | null
           updated_at: string
           venue: string | null
-          live_stream_url: string | null // Added live_stream_url
+          live_stream_url: string | null
+          match_start_time: string | null // Existing
+          match_pause_time: string | null // Existing
+          total_paused_duration: string | null // Existing (INTERVAL type maps to string in JS)
+          match_end_time: string | null // Existing
+          pitch: string | null // Existing
+          weather: string | null // Existing
         }
         Insert: {
           assistant_1?: string | null
@@ -201,7 +186,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"] | null
           updated_at?: string
           venue?: string | null
-          live_stream_url?: string | null // Added live_stream_url
+          live_stream_url?: string | null
+          match_start_time?: string | null // Existing
+          match_pause_time?: string | null // Existing
+          total_paused_duration?: string | null // Existing
+          match_end_time?: string | null // Existing
+          pitch?: string | null // Existing
+          weather?: string | null // Existing
         }
         Update: {
           assistant_1?: string | null
@@ -218,7 +209,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"] | null
           updated_at?: string
           venue?: string | null
-          live_stream_url?: string | null // Added live_stream_url
+          live_stream_url?: string | null
+          match_start_time?: string | null // Existing
+          match_pause_time?: string | null // Existing
+          total_paused_duration?: string | null // Existing
+          match_end_time?: string | null // Existing
+          pitch?: string | null // Existing
+          weather?: string | null // Existing
         }
         Relationships: [
           {
@@ -235,45 +232,6 @@ export type Database = {
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      match_votes: { // Added match_votes table
-        Row: {
-          created_at: string
-          id: string
-          match_id: string
-          player_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          match_id: string
-          player_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          match_id?: string
-          player_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "match_votes_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "matches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "match_votes_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          }
         ]
       }
       motm_awards: {
@@ -374,41 +332,6 @@ export type Database = {
           },
         ]
       }
-      profiles: {
-        Row: {
-          id: string
-          avatar_url: string | null
-          created_at: string
-          updated_at: string
-          first_name: string | null
-          last_name: string | null
-        }
-        Insert: {
-          id: string
-          avatar_url?: string | null
-          created_at?: string
-          updated_at?: string
-          first_name?: string | null
-          last_name?: string | null
-        }
-        Update: {
-          id?: string
-          avatar_url?: string | null
-          created_at?: string
-          updated_at?: string
-          first_name?: string | null
-          last_name?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       teams: {
         Row: {
           _types_ping: boolean
@@ -424,6 +347,7 @@ export type Database = {
           losses: number
           goals_for: number
           goals_against: number
+          played: number
         }
         Insert: {
           _types_ping?: boolean
@@ -439,6 +363,7 @@ export type Database = {
           losses?: number
           goals_for?: number
           goals_against?: number
+          played?: number
         }
         Update: {
           _types_ping?: boolean
@@ -454,6 +379,7 @@ export type Database = {
           losses?: number
           goals_for?: number
           goals_against?: number
+          played?: number
         }
         Relationships: []
       }
@@ -489,102 +415,72 @@ export type Database = {
           },
         ]
       }
-      votes: {
-        Row: {
-          created_at: string
-          id: string
-          match_id: string
-          player_id: string
-          user_id: string | null
-          voter_ip: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          match_id: string
-          player_id: string
-          user_id?: string | null
-          voter_ip: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          match_id?: string
-          player_id?: string
-          user_id?: string | null
-          voter_ip?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "votes_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "matches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "votes_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
-      public_votes: {
-        Row: {
-          created_at: string | null
-          id: string | null
-          match_id: string | null
-          player_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string | null
-          match_id?: string | null
-          player_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string | null
-          match_id?: string | null
-          player_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "votes_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "matches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "votes_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
-      get_user_role: {
-        Args: { user_uuid: string }
-        Returns: Database["public"]["Enums"]["user_role"]
+      has_role: {
+        Args: { _user_id: string, _role: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
       }
-      lovable_types_ping: { Args: never; Returns: boolean }
+      increment_player_motm_awards: {
+        Args: { p_player_id: string }
+        Returns: void
+      }
+      update_team_stats_after_match: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      update_team_stats_from_match_result: {
+        Args: { match_row: Database["public"]["Tables"]["matches"]["Row"], operation: string }
+        Returns: void
+      }
+      recalculate_team_stats: {
+        Args: { p_team_id: string }
+        Returns: void
+      }
+      update_player_motm_count: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      handle_match_stats_update: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      matches_broadcast_trigger: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      handle_updated_at: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      team_standings_fn: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          team_id: string | null
+          name: string | null
+          played: number | null
+          wins: number | null
+          draws: number | null
+          losses: number | null
+          goals_for: number | null
+          goals_against: number | null
+          goal_difference: number | null
+          points: number | null
+        }[]
+      }
     }
     Enums: {
+      app_role: "admin" | "captain" | "viewer" | "referee"
       event_type:
         | "goal"
         | "assist"
         | "yellow_card"
         | "red_card"
         | "substitution"
-      match_status: "scheduled" | "live" | "finished"
+      match_status: "scheduled" | "live" | "finished" | "half_time"
       player_position:
         | "Goalkeeper"
         | "Defender"
@@ -592,7 +488,7 @@ export type Database = {
         | "Forward"
         | "Winger"
         | "Striker"
-      user_role: "admin" | "captain" | "viewer"
+      user_role: "admin" | "captain" | "viewer" | "referee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -721,7 +617,7 @@ export const Constants = {
   public: {
     Enums: {
       event_type: ["goal", "assist", "yellow_card", "red_card", "substitution"],
-      match_status: ["scheduled", "live", "finished"],
+      match_status: ["scheduled", "live", "finished", "half_time"],
       player_position: [
         "Goalkeeper",
         "Defender",
@@ -730,7 +626,8 @@ export const Constants = {
         "Winger",
         "Striker",
       ],
-      user_role: ["admin", "captain", "viewer"],
+      user_role: ["admin", "captain", "viewer", "referee"],
+      app_role: ["admin", "captain", "viewer", "referee"],
     },
   },
 } as const

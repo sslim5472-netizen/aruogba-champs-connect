@@ -2,11 +2,13 @@ import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Countdown from "@/components/Countdown";
 import TeamCard from "@/components/TeamCard";
-import { Trophy, Calendar, BarChart3, Vote, Radio, Shield, Target, Award, Star } from "lucide-react"; // Added Star icon
+import UpcomingMatchesSection from "@/components/UpcomingMatchesSection"; // Import the new component
+import TournamentAwards from "@/components/TournamentAwards"; // New import
+import { Trophy, Calendar, BarChart3, Radio, Shield, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card"; // Import Card component
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth"; // Import useAuth
 
 // Define a type for the team data including player count
 interface TeamWithPlayerCount {
@@ -16,15 +18,17 @@ interface TeamWithPlayerCount {
   logo_url: string;
   color: string;
   player_count: number;
+  played: number; // Added played column
 }
 
 const Index = () => {
-  const { data: teams, isLoading } = useQuery<TeamWithPlayerCount[]>({
+  const { user, userRole, loading: authLoading } = useAuth(); // Use auth context
+  const { data: teams, isLoading: teamsLoading } = useQuery<TeamWithPlayerCount[]>({
     queryKey: ["teams-with-player-count-index"], // Unique query key
     queryFn: async () => {
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
-        .select("id, name, captain_name, logo_url, color")
+        .select("id, name, captain_name, logo_url, color, played") // Select 'played'
         .order("name");
 
       if (teamsError) throw teamsError;
@@ -78,12 +82,7 @@ const Index = () => {
                 Live Match
               </Button>
             </Link>
-            <Link to="/voting">
-              <Button className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-lg px-8 py-6">
-                <Vote className="w-5 h-5 mr-2" />
-                Vote MOTM
-              </Button>
-            </Link>
+            {/* Removed Vote MOTM button */}
             <Link to="/fixtures">
               <Button variant="outline" className="text-lg px-8 py-6 border-primary/50 hover:bg-primary/10">
                 <Calendar className="w-5 h-5 mr-2" />
@@ -100,6 +99,11 @@ const Index = () => {
         </div>
       </div>
 
+      {/* Upcoming Matches Section */}
+      <div className="container mx-auto px-4 py-20">
+        <UpcomingMatchesSection />
+      </div>
+
       {/* Teams Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="text-center mb-12 animate-fade-in">
@@ -111,7 +115,7 @@ const Index = () => {
           </p>
         </div>
 
-        {isLoading ? (
+        {teamsLoading ? (
           <div className="text-center text-muted-foreground">Loading teams...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 animate-scale-in">
@@ -138,60 +142,30 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Tournament Champions & Awards Section */}
-      <div className="border-t border-border/50 py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-heading gradient-text mb-4">
-              Tournament Champions & Awards
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Celebrating the outstanding achievements of the tournament
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-scale-in">
-            {/* Tournament Winner */}
-            <Card className="glass-card p-6 rounded-xl text-center flex flex-col items-center justify-center">
-              <Trophy className="w-16 h-16 text-gold fill-gold mb-4 animate-glow-pulse" />
-              <h3 className="text-xl font-heading mb-2">Tournament Winners</h3>
-              <p className="text-3xl font-heading gradient-text">Stars FC</p>
-            </Card>
-
-            {/* Highest Goal Scorer */}
-            <Card className="glass-card p-6 rounded-xl text-center flex flex-col items-center justify-center">
-              <Target className="w-16 h-16 text-primary mb-4" />
-              <h3 className="text-xl font-heading mb-2">Highest Goal Scorer</h3>
-              <p className="text-3xl font-heading gradient-text">Eric Zexy</p>
-            </Card>
-
-            {/* Highest Assist & Best Player */}
-            <Card className="glass-card p-6 rounded-xl text-center flex flex-col items-center justify-center">
-              <Award className="w-16 h-16 text-accent mb-4" />
-              <h3 className="text-xl font-heading mb-2">Highest Assist & Best Player</h3>
-              <p className="text-3xl font-heading gradient-text">Awe</p>
-            </Card>
-
-            {/* Best Defender */}
-            <Card className="glass-card p-6 rounded-xl text-center flex flex-col items-center justify-center">
-              <Shield className="w-16 h-16 text-silver mb-4" />
-              <h3 className="text-xl font-heading mb-2">Best Defender</h3>
-              <p className="text-3xl font-heading gradient-text">Papa Oblock</p>
-            </Card>
-          </div>
-        </div>
+      {/* Tournament Awards Section */}
+      <div className="container mx-auto px-4 py-20">
+        <TournamentAwards />
       </div>
 
       {/* Admin Panel Section */}
       <div className="border-t border-border/50">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <Link to="/admin/login">
-              <Button variant="outline" className="border-muted-foreground/30 hover:bg-muted/50">
-                <Shield className="w-4 h-4 mr-2" />
-                Admin Panel
-              </Button>
-            </Link>
+            {!authLoading && user && userRole === 'admin' ? (
+              <Link to="/admin">
+                <Button variant="outline" className="border-muted-foreground/30 hover:bg-muted/50">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Admin Panel
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/admin/login">
+                <Button variant="outline" className="border-muted-foreground/30 hover:bg-muted/50">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Admin Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
