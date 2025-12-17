@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Trophy, Target, Award, Shield, Star } from "lucide-react"; // Star icon is already imported
+import { Trophy, Target, Award, Shield, ArrowUpRight } from "lucide-react"; // Added ArrowUpRight icon
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -94,10 +94,10 @@ const Countdown = () => {
           Celebrating the outstanding achievements of the tournament
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> {/* Changed to lg:grid-cols-3 */}
           {/* Tournament Winner */}
           <Card className="p-4 rounded-xl text-center flex flex-col items-center justify-center bg-muted/30">
-            <Trophy className="w-16 h-16 text-gold fill-gold mb-4 animate-glow-pulse" /> {/* Changed back to Trophy icon */}
+            <Trophy className="w-16 h-16 text-gold fill-gold mb-4 animate-glow-pulse" />
             <h3 className="text-xl font-heading mb-2">Tournament Winners</h3>
             <p className="text-3xl font-heading gradient-text">Stars FC</p>
           </Card>
@@ -109,10 +109,17 @@ const Countdown = () => {
             <p className="text-xl font-heading gradient-text">Eric Zexy</p>
           </Card>
 
-          {/* Highest Assist & Best Player */}
+          {/* Best Player */}
           <Card className="p-4 rounded-xl text-center flex flex-col items-center justify-center bg-muted/30">
             <Award className="w-10 h-10 text-accent mb-2" />
-            <h3 className="text-lg font-heading">Best Player & Assist</h3>
+            <h3 className="text-lg font-heading">Best Player</h3>
+            <p className="text-xl font-heading gradient-text">Awe</p>
+          </Card>
+
+          {/* Highest Assist */}
+          <Card className="p-4 rounded-xl text-center flex flex-col items-center justify-center bg-muted/30">
+            <ArrowUpRight className="w-10 h-10 text-primary mb-2" /> {/* New icon for Highest Assist */}
+            <h3 className="text-lg font-heading">Highest Assist</h3>
             <p className="text-xl font-heading gradient-text">Awe</p>
           </Card>
 
