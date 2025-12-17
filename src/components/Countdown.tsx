@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Trophy, Target, Award, Shield, Star } from "lucide-react"; // Added Target, Award, Shield, Star icons
+import { Trophy, Target, Award, Shield, Star } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Card } from "@/components/ui/card"; // Import Card component
+import { Card } from "@/components/ui/card";
 
 const Countdown = () => {
   const queryClient = useQueryClient();
@@ -27,11 +27,11 @@ const Countdown = () => {
         .eq("status", "scheduled")
         .order("match_date", { ascending: true })
         .limit(1)
-        .maybeSingle(); // Use maybeSingle to handle no results gracefully
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
-    refetchInterval: 60 * 1000, // Refetch every minute to catch new scheduled matches
+    refetchInterval: 60 * 1000,
   });
 
   // Update target timestamp when nextMatch data changes
@@ -59,9 +59,8 @@ const Countdown = () => {
       if (distance < 0) {
         clearInterval(interval);
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        // Invalidate the query to refetch and find the *next* next match
         queryClient.invalidateQueries({ queryKey: ["next-scheduled-match"] });
-        setHasMatch(false); // No longer counting down to this match
+        setHasMatch(false);
         return;
       }
 
@@ -97,7 +96,7 @@ const Countdown = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Tournament Winner */}
           <Card className="p-4 rounded-xl text-center flex flex-col items-center justify-center bg-muted/30">
-            <Trophy className="w-10 h-10 text-gold fill-gold mb-2 animate-glow-pulse" />
+            <Trophy className="w-20 h-20 text-gold fill-gold mb-2 animate-glow-pulse" /> {/* Increased size */}
             <h3 className="text-lg font-heading">Winners</h3>
             <p className="text-xl font-heading gradient-text">Stars FC</p>
           </Card>
