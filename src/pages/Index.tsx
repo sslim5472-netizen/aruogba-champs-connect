@@ -3,6 +3,7 @@ import Navigation from "@/components/Navigation";
 import Countdown from "@/components/Countdown";
 import TeamCard from "@/components/TeamCard";
 import UpcomingMatchesSection from "@/components/UpcomingMatchesSection"; // Import the new component
+import TournamentAwards from "@/components/TournamentAwards"; // New import
 import { Trophy, Calendar, BarChart3, Radio, Shield, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -139,6 +140,11 @@ const Index = () => {
             </Button>
           </Link>
         </div>
+      </div>
+
+      {/* Tournament Awards Section */}
+      <div className="container mx-auto px-4 py-20">
+        <TournamentAwards />
       </div>
 
       {/* Admin Panel Section */}
