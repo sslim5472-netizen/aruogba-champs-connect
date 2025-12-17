@@ -97,7 +97,7 @@ const Countdown = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Tournament Winner */}
           <Card className="p-4 rounded-xl text-center flex flex-col items-center justify-center bg-muted/30">
-            <Star className="w-16 h-16 text-gold fill-gold mb-4 animate-glow-pulse" /> {/* Changed to Star icon */}
+            <Trophy className="w-16 h-16 text-gold fill-gold mb-4 animate-glow-pulse" /> {/* Changed back to Trophy icon */}
             <h3 className="text-xl font-heading mb-2">Tournament Winners</h3>
             <p className="text-3xl font-heading gradient-text">Stars FC</p>
           </Card>
