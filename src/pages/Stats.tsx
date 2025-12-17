@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Trophy, Target, Shield, AlertTriangle, AlertOctagon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query"; // Import useQueryClient
+import { useQuery } from "@tanstack/react-query";
 import { getTeamLogo } from "@/lib/teamUtils"; // Import the new utility
 
 interface TeamStat {
@@ -15,7 +15,6 @@ interface TeamStat {
   losses: number;
   goals_for: number;
   goals_against: number;
-  played: number; // Added played column
 }
 
 interface PlayerStat {
@@ -29,7 +28,6 @@ interface PlayerStat {
 
 const Stats = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient(); // Initialize queryClient
   const [loadingStats, setLoadingStats] = useState(true);
   const [topScorers, setTopScorers] = useState<PlayerStat[]>([]);
   const [topAssists, setTopAssists] = useState<PlayerStat[]>([]);
@@ -47,7 +45,7 @@ const Stats = () => {
       console.log("Fetching league standings...");
       const { data, error } = await supabase
         .from("teams")
-        .select("id, name, logo_url, wins, draws, losses, goals_for, goals_against, played") // Select 'played'
+        .select("id, name, logo_url, wins, draws, losses, goals_for, goals_against")
         .order("name");
       if (error) {
         console.error("Error fetching league standings:", error);
@@ -58,34 +56,12 @@ const Stats = () => {
     },
   });
 
-  // Realtime subscription for team stats updates
-  useEffect(() => {
-    const channel = supabase
-      .channel('team-stats-updates-stats-page')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'teams',
-        },
-        () => {
-          console.log("Realtime update: teams table changed, refetching league standings for stats page.");
-          queryClient.invalidateQueries({ queryKey: ['league-standings'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
-
   // Calculate standings and sort
   const standings = teamsData
     ? teamsData
         .map(team => ({
             ...team,
+            played: (team.wins || 0) + (team.draws || 0) + (team.losses || 0),
             points: (team.wins || 0) * 3 + (team.draws || 0) * 1,
             goal_difference: (team.goals_for || 0) - (team.goals_against || 0),
         }))

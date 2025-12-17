@@ -23,10 +23,8 @@ const AdminLogin = () => {
 
   useEffect(() => {
     if (user && userRole === 'admin') {
-      console.log("AdminLogin: User is admin, navigating to /admin/manage");
-      navigate("/admin/manage");
+      navigate("/admin");
     } else if (user && userRole !== 'admin') {
-      console.log("AdminLogin: User is not admin, showing access denied.");
       toast.error("Access denied. Admin privileges required.");
       navigate("/");
     }
@@ -53,11 +51,8 @@ const AdminLogin = () => {
           toast.error(signInError.message || "Failed to sign in");
         }
         setLoading(false);
-      } else {
-        // After successful sign-in, user and userRole should be updated by the AuthProvider
-        // The useEffect above will handle navigation once userRole is 'admin'
-        console.log("AdminLogin: Sign-in successful. Waiting for AuthProvider to update userRole. Current userRole:", userRole);
       }
+      // Success handling is done in useEffect
     } catch (err: any) {
       toast.error(err?.message || "An unexpected error occurred");
       setLoading(false);

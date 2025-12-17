@@ -1,1 +1,0 @@
-DROP POLICY IF EXISTS "Authenticated users can view all votes for a match if they have" ON public.match_votes;

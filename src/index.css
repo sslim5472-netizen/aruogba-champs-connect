@@ -42,7 +42,6 @@ All colors MUST be HSL.
     /* Tournament specific colors */
     --gold: 45 100% 51%;
     --silver: 0 0% 83%;
-    --bronze: 28 60% 50%; /* Added bronze color */
     --navy: 217 33% 8%;
     
     /* Gradient stops */

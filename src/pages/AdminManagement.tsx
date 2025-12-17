@@ -6,9 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamsManagement } from "@/components/admin/TeamsManagement";
 import { PlayersManagement } from "@/components/admin/PlayersManagement";
 import { MatchesManagement } from "@/components/admin/MatchesManagement";
+import { HighlightsManagement } from "@/components/admin/HighlightsManagement";
 import { PhotosManagement } from "@/components/admin/PhotosManagement";
 import { MotmManagement } from "@/components/admin/MotmManagement";
-import { LeagueStandingsManagement } from "@/components/admin/LeagueStandingsManagement";
 import { Shield, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -44,12 +44,14 @@ const AdminManagement = () => {
     );
   }
 
+  // If user is null or not admin, the effect above handles navigation
   if (!user || userRole !== 'admin') {
     return null;
   }
 
   const handleSignOut = async () => {
     await signOut();
+    // signOut handles navigation and reload, so no further action needed here
   };
 
   return (
@@ -82,13 +84,13 @@ const AdminManagement = () => {
           </div>
 
           <Tabs defaultValue="teams" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 glass-card"> {/* Adjusted grid-cols to 5 */}
+            <TabsList className="grid w-full grid-cols-6 glass-card">
               <TabsTrigger value="teams">Teams</TabsTrigger>
               <TabsTrigger value="players">Players</TabsTrigger>
               <TabsTrigger value="matches">Matches</TabsTrigger>
+              <TabsTrigger value="highlights">Highlights</TabsTrigger>
               <TabsTrigger value="photos">Photos</TabsTrigger>
               <TabsTrigger value="motm">MOTM</TabsTrigger>
-              <TabsTrigger value="standings">Standings</TabsTrigger>
             </TabsList>
 
             <TabsContent value="teams">
@@ -102,6 +104,10 @@ const AdminManagement = () => {
             <TabsContent value="matches">
               <MatchesManagement />
             </TabsContent>
+
+            <TabsContent value="highlights">
+              <HighlightsManagement />
+            </TabsContent>
             
             <TabsContent value="photos">
               <PhotosManagement />
@@ -109,10 +115,6 @@ const AdminManagement = () => {
 
             <TabsContent value="motm">
               <MotmManagement />
-            </TabsContent>
-
-            <TabsContent value="standings">
-              <LeagueStandingsManagement />
             </TabsContent>
           </Tabs>
         </div>

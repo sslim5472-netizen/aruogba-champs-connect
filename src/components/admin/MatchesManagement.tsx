@@ -126,12 +126,6 @@ export const MatchesManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["matches-admin"] });
-      queryClient.invalidateQueries({ queryKey: ["league-standings-full"] }); // Invalidate standings
-      queryClient.invalidateQueries({ queryKey: ["league-standings"] }); // Invalidate standings for Stats page
-      queryClient.invalidateQueries({ queryKey: ["teams-with-player-count"] }); // Invalidate teams for Teams page
-      queryClient.invalidateQueries({ queryKey: ["teams-with-player-count-index"] }); // Invalidate teams for Index page
-      queryClient.invalidateQueries({ queryKey: ["next-scheduled-match"] }); // Invalidate countdown
-      queryClient.invalidateQueries({ queryKey: ["upcoming-matches-homepage"] }); // Invalidate homepage upcoming matches
       resetForm();
       toast.success("Match created successfully");
     },
@@ -148,12 +142,6 @@ export const MatchesManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["matches-admin"] });
-      queryClient.invalidateQueries({ queryKey: ["league-standings-full"] }); // Invalidate standings
-      queryClient.invalidateQueries({ queryKey: ["league-standings"] }); // Invalidate standings for Stats page
-      queryClient.invalidateQueries({ queryKey: ["teams-with-player-count"] }); // Invalidate teams for Teams page
-      queryClient.invalidateQueries({ queryKey: ["teams-with-player-count-index"] }); // Invalidate teams for Index page
-      queryClient.invalidateQueries({ queryKey: ["next-scheduled-match"] }); // Invalidate countdown
-      queryClient.invalidateQueries({ queryKey: ["upcoming-matches-homepage"] }); // Invalidate homepage upcoming matches
       resetForm();
       toast.success("Match updated successfully");
     },
@@ -167,12 +155,6 @@ export const MatchesManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["matches-admin"] });
-      queryClient.invalidateQueries({ queryKey: ["league-standings-full"] }); // Invalidate standings
-      queryClient.invalidateQueries({ queryKey: ["league-standings"] }); // Invalidate standings for Stats page
-      queryClient.invalidateQueries({ queryKey: ["teams-with-player-count"] }); // Invalidate teams for Teams page
-      queryClient.invalidateQueries({ queryKey: ["teams-with-player-count-index"] }); // Invalidate teams for Index page
-      queryClient.invalidateQueries({ queryKey: ["next-scheduled-match"] }); // Invalidate countdown
-      queryClient.invalidateQueries({ queryKey: ["upcoming-matches-homepage"] }); // Invalidate homepage upcoming matches
       toast.success("Match deleted successfully");
     },
     onError: () => toast.error("Failed to delete match"),
